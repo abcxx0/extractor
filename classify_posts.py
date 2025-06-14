@@ -391,7 +391,7 @@ def clasificar_noticia(titulo, cats_str):
     return 'Otros'
 
 # --- Aplicar clasificación y guardar resultados ---
-df = pd.read_csv('datos_actualizados.csv')
+df = pd.read_csv('datos_actualizados.csv', sep=';', encoding='utf-8')
 
 df['Topico_Final'] = df.apply(
     lambda x: clasificar_noticia(x['Título'], x.get('Categorías', '')), axis=1
