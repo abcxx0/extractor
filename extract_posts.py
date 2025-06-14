@@ -1,64 +1,109 @@
-import requests, pandas as pd
+import pandas as pd
+import requests
+from tqdm import tqdm
+import base64
 from datetime import datetime
-from requests.auth import HTTPBasicAuth
+import os
 
-WP_USER = "redaccion"
-WP_PASS = "redaccion"
-BASE_API = "https://ciudadanocalamuchita.com.ar/wp-json/wp/v2"
-auth     = HTTPBasicAuth(WP_USER, WP_PASS)
+# Configuración
+BASE_URL = "https://ciudadanocalamuchita.com.ar/wp-json/wp/v2"
+CREDENTIALS = base64.b64encode(b"redaccion:redaccion").decode()
+HEADERS = {"Authorization": f"Basic {CREDENTIALS}"}
+ARCHIVO_CSV = "datos_actualizados.csv"
+COLUMNAS = ['ID', 'Título', 'Autor', 'Categorías', 'Fecha', 'Hora', 'Vistas', 'Topico_Final']
 
-after_date = "2025-05-20T00:00:00"
+def inicializar_csv():
+    if not os.path.exists(ARCHIVO_CSV):
+        pd.DataFrame(columns=COLUMNAS).to_csv(ARCHIVO_CSV, index=False, sep=';')
 
-print("🔍 Iniciando extracción de posts...", flush=True)
-
-try:
-    resp_users = requests.get(
-        f"{BASE_API}/users?per_page=100", auth=auth, timeout=10
-    )
-    resp_users.raise_for_status()
-    users = resp_users.json()
-    autor_map = { str(u["id"]): u["name"] for u in users }
-    print(f"👥 {len(autor_map)} autores cargados.", flush=True)
-except Exception as e:
-    print("❌ Error al obtener autores:", e, flush=True)
-    exit(1)
-
-page = 1
-all_posts = []
-while True:
-    print(f"📄 Obteniendo página {page}...", flush=True)
+def cargar_datos_existentes():
     try:
-        resp = requests.get(
-            f"{BASE_API}/posts?after={after_date}&per_page=100&page={page}",
-            auth=auth,
-            timeout=10
-        )
-        resp.raise_for_status()
-        posts = resp.json()
-    except Exception as e:
-        print(f"❌ Error en página {page}:", e, flush=True)
-        break
+        df = pd.read_csv(ARCHIVO_CSV, sep=';')
+        df['Fecha'] = df['Fecha'].astype(str)
+        return df
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        return pd.DataFrame(columns=COLUMNAS)
 
-    if not posts:
-        print("✅ No quedan posts. Terminando paginación.", flush=True)
-        break
+def obtener_ultimo_id():
+    df = cargar_datos_existentes()
+    return df['ID'].max() if not df.empty else 0
 
-    all_posts.extend(posts)
-    page += 1
+def obtener_mapeos():
+    print("Obteniendo mapeos de autores y categorías...", flush=True)
+    autores = requests.get(f"{BASE_URL}/users?per_page=100", headers=HEADERS).json()
+    categorias = requests.get(f"{BASE_URL}/categories?per_page=100", headers=HEADERS).json()
+    autores_map = {a['id']: a.get('name', f"Autor-{a['id']}") for a in autores}
+    categorias_map = {c['id']: c.get('name', f"Categoría-{c['id']}") for c in categorias}
+    return autores_map, categorias_map
 
-print(f"🔢 Total de posts obtenidos: {len(all_posts)}", flush=True)
+def obtener_nuevos_posts(ultimo_id):
+    nuevos_posts = []
+    page = 1
+    print("\nBuscando nuevos artículos...", flush=True)
+    with tqdm(desc="Progreso páginas") as pbar:
+        while True:
+            resp = requests.get(
+                f"{BASE_URL}/posts",
+                params={
+                    "page": page,
+                    "per_page": 100,
+                    "orderby": "id",
+                    "order": "asc",
+                    "_fields": "id,title,author,categories,date",
+                    "after": "2025-05-20T00:00:00"
+                },
+                headers=HEADERS,
+                timeout=10
+            )
+            if resp.status_code != 200:
+                print(f"❌ Error HTTP {resp.status_code} en página {page}", flush=True)
+                break
+            posts = resp.json()
+            if not posts:
+                break
+            filtrados = [p for p in posts if p['id'] > ultimo_id]
+            if not filtrados:
+                break
+            nuevos_posts.extend(filtrados)
+            page += 1
+            pbar.update(1)
+    return nuevos_posts
 
-rows = []
-for p in all_posts:
-    rows.append({
-        "ID":     p["id"],
-        "Fecha":  datetime.strptime(p["date"], "%Y-%m-%dT%H:%M:%S"),
-        "Autor":  autor_map.get(str(p["author"]), p["author"]),
-        "Título": p["title"]["rendered"],
-        "URL":    p["link"]
-    })
+def procesar_posts(posts, autores_map, categorias_map):
+    datos = []
+    for p in tqdm(posts, desc="Procesando artículos"):
+        fecha = datetime.strptime(p['date'], "%Y-%m-%dT%H:%M:%S")
+        datos.append({
+            "ID":             p['id'],
+            "Título":         p['title']['rendered'],
+            "Autor":          autores_map.get(p['author'], f"Autor-{p['author']}"),
+            "Categorías":     ", ".join(categorias_map.get(cid, f"Categoría-{cid}") for cid in p.get('categories', [])),
+            "Fecha":          fecha.strftime("%Y-%m-%d"),
+            "Hora":           fecha.strftime("%H:%M:%S"),
+            "Vistas":         "",
+            "Topico_Final":   ""
+        })
+    return datos
 
-df = pd.DataFrame(rows)
-output_file = "posts_extraidos.csv"
-df.to_csv(output_file, index=False)
-print(f"💾 Guardado en {output_file}", flush=True)
+def actualizar_csv(nuevos_datos):
+    df_old = cargar_datos_existentes()
+    df_new = pd.DataFrame(nuevos_datos)
+    df_final = pd.concat([df_old, df_new]).drop_duplicates('ID')
+    df_final = df_final.sort_values(['Fecha','Hora'], ascending=[False,False])
+    df_final.to_csv(ARCHIVO_CSV, index=False, sep=';')
+    return len(df_new)
+
+def main():
+    inicializar_csv()
+    ultimo_id = obtener_ultimo_id()
+    autores_map, categorias_map = obtener_mapeos()
+    nuevos = obtener_nuevos_posts(ultimo_id)
+    if nuevos:
+        datos = procesar_posts(nuevos, autores_map, categorias_map)
+        cnt = actualizar_csv(datos)
+        print(f"\n✅ Se agregaron {cnt} registros a {ARCHIVO_CSV}", flush=True)
+    else:
+        print("\nℹ️ No hay nuevos artículos.", flush=True)
+
+if __name__ == "__main__":
+    main()
