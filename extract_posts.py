@@ -104,11 +104,23 @@ def main():
     nuevos_posts  = obtener_nuevos_posts(ultimo_id)
 
     if nuevos_posts:
-        nuevos_datos = procesar_posts(nuevos_posts, autores_map, categorias_map)
-        cnt = actualizar_csv(nuevos_datos)
-        print(f"\n✅ Se agregaron {cnt} registros a {ARCHIVO_CSV}", flush=True)
-    else:
-        print("\nℹ️ No hay nuevos artículos.", flush=True)
+    nuevos_datos = procesar_posts(nuevos_posts, autores_map, categorias_map)
+    cnt = actualizar_csv(nuevos_datos)
+    print(f"\n✅ Se agregaron {cnt} registros a {ARCHIVO_CSV}", flush=True)
+
+    # Guardar la última fecha para evitar duplicados en el futuro
+    fechas = [d["Fecha"] for d in nuevos_datos]
+    if fechas:
+        ultima_fecha = max(fechas)
+        with open("ultima_fecha.txt", "w") as f:
+            f.write(ultima_fecha)
+
+else:
+    print("\nℹ️ No hay nuevos artículos.", flush=True)
 
 if __name__ == "__main__":
     main()
+
+
+
+
