@@ -20,13 +20,16 @@ jobs:
       - name: Instalar dependencias
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install pandas requests tqdm
+          python3 -m pip install pandas requests tqdm unidecode
 
       - name: Ejecutar extractor
         run: python3 extract_posts.py
 
-      - name: Subir CSV como artefacto
+      - name: Ejecutar clasificación
+        run: python3 classify_posts.py
+
+      - name: Subir CSV clasificado
         uses: actions/upload-artifact@v4
         with:
-          name: datos-csv
-          path: datos_actualizados.csv
+          name: datos-clasificados
+          path: datos_clasificados.csv
