@@ -1,5 +1,4 @@
 # 1) Instala dependencias (solo la primera vez)
-!pip install pandas requests
 
 # 2) Imports
 import requests, pandas as pd
