@@ -6,11 +6,12 @@ from datetime import datetime
 import os
 
 # Configuración
-BASE_URL = "https://ciudadanocalamuchita.com.ar/wp-json/wp/v2"
-CREDENTIALS = base64.b64encode(b"redaccion:redaccion").decode()
-HEADERS = {"Authorization": f"Basic {CREDENTIALS}"}
-ARCHIVO_CSV = "datos_actualizados.csv"
-COLUMNAS = ['ID', 'Título', 'Autor', 'Categorías', 'Fecha', 'Hora', 'Vistas', 'Topico_Final']
+BASE_URL     = "https://ciudadanocalamuchita.com.ar/wp-json/wp/v2"
+CREDENTIALS  = base64.b64encode(b"redaccion:redaccion").decode()
+HEADERS      = {"Authorization": f"Basic {CREDENTIALS}"}
+ARCHIVO_CSV  = "datos_actualizados.csv"
+COLUMNAS     = ['ID', 'Título', 'Autor', 'Categorías', 'Fecha', 'Hora', 'Vistas', 'Topico_Final']
+AFTER_DATE   = "2025-05-20T00:00:00"
 
 def inicializar_csv():
     if not os.path.exists(ARCHIVO_CSV):
@@ -30,16 +31,16 @@ def obtener_ultimo_id():
 
 def obtener_mapeos():
     print("Obteniendo mapeos de autores y categorías...", flush=True)
-    autores = requests.get(f"{BASE_URL}/users?per_page=100", headers=HEADERS).json()
-    categorias = requests.get(f"{BASE_URL}/categories?per_page=100", headers=HEADERS).json()
-    autores_map = {a['id']: a.get('name', f"Autor-{a['id']}") for a in autores}
-    categorias_map = {c['id']: c.get('name', f"Categoría-{c['id']}") for c in categorias}
+    autores     = requests.get(f"{BASE_URL}/users?per_page=100", headers=HEADERS, timeout=10).json()
+    categorias  = requests.get(f"{BASE_URL}/categories?per_page=100", headers=HEADERS, timeout=10).json()
+    autores_map     = {a['id']: a.get('name', f"Autor-{a['id']}") for a in autores}
+    categorias_map  = {c['id']: c.get('name', f"Categoría-{c['id']}") for c in categorias}
     return autores_map, categorias_map
 
 def obtener_nuevos_posts(ultimo_id):
+    print("\nBuscando nuevos artículos...", flush=True)
     nuevos_posts = []
     page = 1
-    print("\nBuscando nuevos artículos...", flush=True)
     with tqdm(desc="Progreso páginas") as pbar:
         while True:
             resp = requests.get(
@@ -49,8 +50,8 @@ def obtener_nuevos_posts(ultimo_id):
                     "per_page": 100,
                     "orderby": "id",
                     "order": "asc",
-                    "_fields": "id,title,author,categories,date",
-                    "after": "2025-05-20T00:00:00"
+                    "_fields": "id,title,author,categories,date,views",
+                    "after": AFTER_DATE
                 },
                 headers=HEADERS,
                 timeout=10
@@ -70,18 +71,19 @@ def obtener_nuevos_posts(ultimo_id):
     return nuevos_posts
 
 def procesar_posts(posts, autores_map, categorias_map):
+    print(f"\nProcesando {len(posts)} artículos...", flush=True)
     datos = []
     for p in tqdm(posts, desc="Procesando artículos"):
         fecha = datetime.strptime(p['date'], "%Y-%m-%dT%H:%M:%S")
         datos.append({
-            "ID":             p['id'],
-            "Título":         p['title']['rendered'],
-            "Autor":          autores_map.get(p['author'], f"Autor-{p['author']}"),
-            "Categorías":     ", ".join(categorias_map.get(cid, f"Categoría-{cid}") for cid in p.get('categories', [])),
-            "Fecha":          fecha.strftime("%Y-%m-%d"),
-            "Hora":           fecha.strftime("%H:%M:%S"),
-            "Vistas":         "",
-            "Topico_Final":   ""
+            "ID":            p['id'],
+            "Título":        p['title']['rendered'],
+            "Autor":         autores_map.get(p['author'], f"Autor-{p['author']}"),
+            "Categorías":    ", ".join(categorias_map.get(cid, f"Categoría-{cid}") for cid in p.get('categories', [])),
+            "Fecha":         fecha.strftime("%Y-%m-%d"),
+            "Hora":          fecha.strftime("%H:%M:%S"),
+            "Vistas":        p.get('views', 0),
+            "Topico_Final":  ""
         })
     return datos
 
@@ -89,18 +91,19 @@ def actualizar_csv(nuevos_datos):
     df_old = cargar_datos_existentes()
     df_new = pd.DataFrame(nuevos_datos)
     df_final = pd.concat([df_old, df_new]).drop_duplicates('ID')
-    df_final = df_final.sort_values(['Fecha','Hora'], ascending=[False,False])
+    df_final = df_final.sort_values(['Fecha','Hora'], ascending=[False, False])
     df_final.to_csv(ARCHIVO_CSV, index=False, sep=';')
     return len(df_new)
 
 def main():
     inicializar_csv()
-    ultimo_id = obtener_ultimo_id()
+    ultimo_id     = obtener_ultimo_id()
     autores_map, categorias_map = obtener_mapeos()
-    nuevos = obtener_nuevos_posts(ultimo_id)
-    if nuevos:
-        datos = procesar_posts(nuevos, autores_map, categorias_map)
-        cnt = actualizar_csv(datos)
+    nuevos_posts  = obtener_nuevos_posts(ultimo_id)
+
+    if nuevos_posts:
+        nuevos_datos = procesar_posts(nuevos_posts, autores_map, categorias_map)
+        cnt = actualizar_csv(nuevos_datos)
         print(f"\n✅ Se agregaron {cnt} registros a {ARCHIVO_CSV}", flush=True)
     else:
         print("\nℹ️ No hay nuevos artículos.", flush=True)
