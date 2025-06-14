@@ -50,7 +50,7 @@ def obtener_nuevos_posts(ultimo_id):
                     "per_page": 100,
                     "orderby": "id",
                     "order": "asc",
-                    "_fields": "id,title,author,categories,date,views",
+                    "_fields": "id,title,author,categories,date,views",  # <- Añadido views
                     "after": AFTER_DATE
                 },
                 headers=HEADERS,
@@ -82,7 +82,7 @@ def procesar_posts(posts, autores_map, categorias_map):
             "Categorías":    ", ".join(categorias_map.get(cid, f"Categoría-{cid}") for cid in p.get('categories', [])),
             "Fecha":         fecha.strftime("%Y-%m-%d"),
             "Hora":          fecha.strftime("%H:%M:%S"),
-            "Vistas":        p.get('views', 0),
+            "Vistas":        p.get('views', 0),  # <- Usamos el campo views
             "Topico_Final":  ""
         })
     return datos
