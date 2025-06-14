@@ -1,0 +1,23 @@
+name: Extraer Posts
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  run-extractor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: |
+          pip install --upgrade pip
+          pip install pandas requests
+      - run: python extractor/extract_posts.py
+      - uses: actions/upload-artifact@v3
+        with:
+          name: posts-data
+          path: ruta/a/tu/salida.csv
