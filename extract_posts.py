@@ -13,7 +13,15 @@ CREDENTIALS  = base64.b64encode(b"redaccion:redaccion").decode()
 HEADERS      = {"Authorization": f"Basic {CREDENTIALS}"}
 ARCHIVO_CSV  = "datos_actualizados.csv"
 COLUMNAS     = ['ID', 'Título', 'Autor', 'Categorías', 'Fecha', 'Hora', 'Vistas', 'Topico_Final']
-AFTER_DATE   = "2025-05-20T00:00:00"
+
+# Leer última fecha guardada si existe, o usar una vieja por defecto
+if os.path.exists("ultima_fecha.txt"):
+    with open("ultima_fecha.txt", "r") as f:
+        fecha_str = f.read().strip()
+        AFTER_DATE = f"{fecha_str}T00:00:00"
+else:
+    AFTER_DATE = "2024-12-01T00:00:00"  # una fecha vieja si es la primera vez
+
 
 def inicializar_csv():
     if not os.path.exists(ARCHIVO_CSV):
