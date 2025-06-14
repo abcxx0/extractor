@@ -1,23 +1,20 @@
-# 1) Imports
 import requests, pandas as pd
 from datetime import datetime
 from requests.auth import HTTPBasicAuth
 
-# 2) Credenciales y URL base
 WP_USER = "redaccion"
 WP_PASS = "redaccion"
 BASE_API = "https://ciudadanocalamuchita.com.ar/wp-json/wp/v2"
 auth     = HTTPBasicAuth(WP_USER, WP_PASS)
 
-# 3) Define la fecha de corte
 after_date = "2025-05-20T00:00:00"
 
-# Debug: inicio
 print("🔍 Iniciando extracción de posts...", flush=True)
 
-# 4) Trae usuarios y construye el mapa de autores
 try:
-    resp_users = requests.get(f"{BASE_API}/users?per_page=100", auth=auth, timeout=10)
+    resp_users = requests.get(
+        f"{BASE_API}/users?per_page=100", auth=auth, timeout=10
+    )
     resp_users.raise_for_status()
     users = resp_users.json()
     autor_map = { str(u["id"]): u["name"] for u in users }
@@ -26,7 +23,6 @@ except Exception as e:
     print("❌ Error al obtener autores:", e, flush=True)
     exit(1)
 
-# 5) Paginación de posts
 page = 1
 all_posts = []
 while True:
@@ -52,7 +48,6 @@ while True:
 
 print(f"🔢 Total de posts obtenidos: {len(all_posts)}", flush=True)
 
-# 6) Construye DataFrame y guarda
 rows = []
 for p in all_posts:
     rows.append({
