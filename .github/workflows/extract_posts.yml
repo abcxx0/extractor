@@ -3,14 +3,13 @@ name: Extraer Posts
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'  # cada día a medianoche UTC
+    - cron: '0 0 * * *'
 
 jobs:
   run-extractor:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout del repositorio
+      - name: Checkout
         uses: actions/checkout@v3
 
       - name: Configurar Python
@@ -20,14 +19,14 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          pip install --upgrade pip
-          pip install pandas requests
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pandas requests tqdm
 
       - name: Ejecutar extractor
-        run: python extract_posts.py
+        run: python3 extract_posts.py
 
       - name: Subir CSV como artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: posts-data
-          path: posts_extraidos.csv
+          name: datos-csv
+          path: datos_actualizados.csv
