@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 
 # --- Cargar y preparar datos ---
-df = pd.read_csv('datos_clasificados.csv', sep=';', encoding='utf-8')
+df = pd.read_csv('datos_clasificados.csv', encoding='utf-8')  # usa coma por defecto
 df['Fecha'] = pd.to_datetime(df['Fecha'], errors='coerce')
 df['Dia_Semana'] = df['Fecha'].dt.day_name()
 
