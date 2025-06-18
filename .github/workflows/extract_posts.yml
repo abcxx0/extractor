@@ -1,44 +1,35 @@
-name: Ejecutar solo análisis
+name: Extraer Posts
 
 on:
-  workflow_dispatch:        # lo lanzas a mano con “Run workflow”
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 1'
 
 jobs:
-  run-analysis:
+  run-extractor:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Clonar tu código
-      - name: Checkout del repo
+      - name: Checkout
         uses: actions/checkout@v3
 
-      # 2) Descargar el artefacto “datos-clasificados” del
-      #    ÚLTIMO run exitoso de extract_posts.yml
-      - name: Descargar artefacto datos-clasificados
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: extract_posts.yml      # <- nombre del otro workflow
-          name: datos-clasificados         # <- nombre EXACTO del artefacto
-          repo: ${{ github.repository }}   # mismo repositorio
-          path: .                          # deja el CSV en la raíz
-
-      # 3) Preparar Python
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: '3.x'
 
-      # 4) Instalar librerías necesarias
       - name: Instalar dependencias
-        run: pip install pandas matplotlib seaborn
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pandas requests tqdm unidecode
 
-      # 5) Ejecutar tu script de análisis
-      - name: Ejecutar analyze_posts.py
-        run: python3 analyze_posts.py
+      - name: Ejecutar extractor
+        run: python3 extract_posts.py
 
-      # 6) Subir los gráficos + informe como artefacto
-      - name: Subir informe y gráficos
+      - name: Ejecutar clasificación
+        run: python3 classify_posts.py
+
+      - name: Subir CSV clasificado
         uses: actions/upload-artifact@v4
         with:
-          name: informe-analisis
-          path: salida/                  # carpeta creada por el script
+          name: datos-clasificados
+          path: datos_clasificados.csv
