@@ -26,10 +26,18 @@ jobs:
         run: python3 extract_posts.py
 
       - name: Ejecutar clasificación
-        run: python3 classify_posts.py
+        run: python3 classify_posts.py               
+
+      - name: Verificar contenido del workspace       
+        run: |
+         echo "📂 Contenido tras la clasificación:"
+         pwd
+         ls -R
 
       - name: Subir CSV clasificado
         uses: actions/upload-artifact@v4
         with:
           name: datos-clasificados
           path: datos_clasificados.csv
+          if-no-files-found: error
+
