@@ -1,3 +1,4 @@
+# .github/workflows/solo_analisis.yml
 name: Ejecutar solo análisis
 
 on:
@@ -6,9 +7,22 @@ on:
 jobs:
   run-analysis:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Clonar repo
+      - name: Checkout del repo
         uses: actions/checkout@v3
+
+      - name: Descargar artefacto datos-clasificados
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: Extraer Posts        # ← usa el “name:” del otro workflow
+          name: datos-clasificados
+          repo: ${{ github.repository }}
+          path: .
+
+      # NUEVO: mover el CSV a la raíz
+      - name: Mover CSV a la carpeta raíz
+        run: mv datos-clasificados/datos_clasificados.csv .
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -16,8 +30,7 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependencias
-        run: |
-          pip install pandas matplotlib seaborn
+        run: pip install pandas matplotlib seaborn
 
       - name: Ejecutar analyze_posts.py
         run: python3 analyze_posts.py
