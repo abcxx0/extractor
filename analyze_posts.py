@@ -21,7 +21,7 @@ except ImportError:
 # ────────────────────────────────────────────────────────────────────────
 # Cargar datos
 CSV = "datos_clasificados.csv"
-df  = pd.read_csv(CSV, sep=";")  # ← ajusta si tu separador cambia
+df  = pd.read_csv(CSV)            # usa el separador por defecto “,”
 
 # Parsing de fechas
 df["Fecha"]      = pd.to_datetime(df["Fecha"])
