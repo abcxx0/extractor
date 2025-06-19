@@ -3,41 +3,48 @@ name: Extraer Posts
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 12 * * 1'
+    - cron: '0 12 * * 1'   # cada lunes a las 09:00 🇦🇷
 
 jobs:
   run-extractor:
     runs-on: ubuntu-latest
+
     steps:
+      # 1 — Clonar repositorio
       - name: Checkout
         uses: actions/checkout@v3
 
+      # 2 — Configurar Python
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.11"
 
+      # 3 — Instalar dependencias
       - name: Instalar dependencias
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install pandas requests tqdm unidecode
+          pip install --upgrade pip
+          pip install pandas requests tqdm unidecode
 
+      # 4 — Extraer posts
       - name: Ejecutar extractor
         run: python3 extract_posts.py
 
+      # 5 — Clasificar posts
       - name: Ejecutar clasificación
-        run: python3 classify_posts.py               
+        run: python3 classify_posts.py
 
-      - name: Verificar contenido del workspace       
+      # 6 — Verificar qué archivos se generaron
+      - name: Verificar contenido del workspace
         run: |
-         echo "📂 Contenido tras la clasificación:"
-         pwd
-         ls -R
+          echo "📂 Contenido tras la clasificación:"
+          pwd
+          ls -R
 
+      # 7 — Subir CSV clasificado como artefacto
       - name: Subir CSV clasificado
         uses: actions/upload-artifact@v4
         with:
-          name: datos-clasificados
-          path: datos_clasificados.csv
-          if-no-files-found: error
-
+          name: datos-clasificados      # nombre del artefacto
+          path: datos_clasificados.csv  # ruta al archivo
+          if-no-files-found: error      # falla si no lo encuentra
