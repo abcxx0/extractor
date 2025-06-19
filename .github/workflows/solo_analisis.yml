@@ -8,33 +8,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1 — Clonar el repositorio
       - name: Checkout del repo
         uses: actions/checkout@v3
 
+      # 2 — Descargar el artefacto datos-clasificados
       - name: Descargar artefacto datos-clasificados
         uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: extract_posts.yml
-          name: datos-clasificados
+          workflow: extract_posts.yml          # workflow donde se generó
+          name: datos-clasificados             # nombre exacto del artefacto
           repo: ${{ github.repository }}
-          path: .
+          path: .                              # se extrae en la raíz
 
-      - name: Mover CSV a la carpeta raíz
-        run: mv datos-clasificados/datos_clasificados.csv .
+      # 3 — (Opcional) Verificar que el CSV esté en la raíz
+      - name: Listar archivos descargados
+        run: ls -R
 
+      # 4 — Configurar Python
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
+      # 5 — Instalar dependencias
       - name: Instalar dependencias
         run: pip install pandas matplotlib seaborn
 
+      # 6 — Ejecutar el análisis
       - name: Ejecutar analyze_posts.py
         run: python3 analyze_posts.py
 
+      # 7 — Subir informe y gráficos como artefacto
       - name: Subir informe y gráficos
         uses: actions/upload-artifact@v4
         with:
-          name: informe-analisis
-          path: salida/
+          name: informe-analisis              # así aparecerá en Artifacts
+          path: salida/                       # carpeta que crea tu script
