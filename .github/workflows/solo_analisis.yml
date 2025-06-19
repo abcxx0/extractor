@@ -46,6 +46,13 @@ jobs:
       - name: Ejecutar analyze_posts.py
         run: python3 analyze_posts.py
 
+        # 6-bis — Verificar qué archivos hay y dónde quedó el JSON
+      - name: Verificar archivos generados
+        run: |
+          echo "Directorio actual: $(pwd)"
+          echo "Listado recursivo:"
+          ls -R
+
       # 7 — Subir informe y gráficos como artefacto
       - name: Subir informe y gráficos
         uses: actions/upload-artifact@v4
