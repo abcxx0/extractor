@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
 """
 Genera un informe PDF con visualizaciones clave
 a partir de datos_clasificados.csv (separador = coma).
 """
 
-import os, subprocess, sys
+import os, subprocess, sys, json
+import datetime as dt           #  ← NUEVO
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
+
 
 # ────────────────────────────────────────────────────────────────
 # Instalar adjustText “on-the-fly” si hace falta
@@ -19,15 +20,27 @@ except ImportError:
     from adjustText import adjust_text
 
 # ────────────────────────────────────────────────────────────────
-# Cargar datos
 CSV = "datos_clasificados.csv"
-df  = pd.read_csv(CSV)              # separador por defecto “,”
+df  = pd.read_csv(CSV, parse_dates=["Fecha"])
 
-df["Fecha"]      = pd.to_datetime(df["Fecha"])
-df["Dia_Semana"] = df["Fecha"].dt.day_name()
+# ───────────────────────────────────────────────
+# 2) Definir start_date y end_date  (AQUÍ)
+# ───────────────────────────────────────────────
+STATE = ".ultima_fecha_analizada.json"
 
-OUT_DIR = "salida"
-os.makedirs(OUT_DIR, exist_ok=True)
+if os.path.exists(STATE):
+    with open(STATE) as f:
+        last_date = dt.date.fromisoformat(json.load(f)["ultima_fecha"])
+    start_date = last_date + dt.timedelta(days=1)            # ← día siguiente
+else:
+    # Primera vez: toma 4 semanas hacia atrás
+    start_date = (df["Fecha"].max() - pd.Timedelta(weeks=4)).date()
+
+end_date = df["Fecha"].max().date()                          # ← **define esto**
+
+# Filtra el dataframe para que TODO lo que sigue use solo ese rango
+mask = (df["Fecha"].dt.date >= start_date) & (df["Fecha"].dt.date <= end_date)
+df = df.loc[mask]
 
 # ════════════════════════════════════════════════════════════════
 # KPI por tópico
