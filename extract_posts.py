@@ -112,9 +112,9 @@ def main():
     nuevos_posts  = obtener_nuevos_posts(ultimo_id)
 
     if nuevos_posts:
-    nuevos_datos = procesar_posts(nuevos_posts, autores_map, categorias_map)
-    cnt = actualizar_csv(nuevos_datos)
-    print(f"\n✅ Se agregaron {cnt} registros a {ARCHIVO_CSV}", flush=True)
+        nuevos_datos = procesar_posts(nuevos_posts, autores_map, categorias_map)
+        cnt = actualizar_csv(nuevos_datos)
+        print(f"\n✅ Se agregaron {cnt} registros a {ARCHIVO_CSV}", flush=True)
 
     # Guardar la última fecha para evitar duplicados en el futuro
     fechas = [d["Fecha"] for d in nuevos_datos]
