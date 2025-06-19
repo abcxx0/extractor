@@ -137,3 +137,12 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     fig.tight_layout(); pdf.savefig(fig); plt.close()
 
 print(f"✅ Informe generado: {OUT_DIR}/informe_analisis.pdf")
+
+# ──  A)  Escribir la fecha de corte  ──────────────────────────
+import json, os
+with open(".ultima_fecha_analizada.json", "w") as f:
+    json.dump({"ultima_fecha": end_date.isoformat()}, f)
+
+# ──  B)  (Opcional) listar archivos para depurar  ─────────────
+print("Archivos en cwd tras generar el reporte:")
+print(os.listdir("."))
