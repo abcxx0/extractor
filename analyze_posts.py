@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# analyze_posts.py
 """
-Genera un informe PDF con visualizaciones clave a partir de datos_clasificados.csv
+Genera un informe PDF con visualizaciones clave
+a partir de datos_clasificados.csv (separador = coma).
 """
 
 import os, subprocess, sys
@@ -10,68 +10,57 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
 
-# ────────────────────────────────────────────────────────────────────────
-# Utilidad opcional: instalar adjustText si no está
+# ────────────────────────────────────────────────────────────────
+# Instalar adjustText “on-the-fly” si hace falta
 try:
     from adjustText import adjust_text
 except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "adjustText"])
     from adjustText import adjust_text
 
-# ────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
 # Cargar datos
 CSV = "datos_clasificados.csv"
-df  = pd.read_csv(CSV)            # usa el separador por defecto “,”
+df  = pd.read_csv(CSV)              # separador por defecto “,”
 
-# Parsing de fechas
 df["Fecha"]      = pd.to_datetime(df["Fecha"])
 df["Dia_Semana"] = df["Fecha"].dt.day_name()
 
-# Directorio de salida
 OUT_DIR = "salida"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# ═══════════════════════════════════════════════════════════════════════
-# 1· TABLA KPI
+# ════════════════════════════════════════════════════════════════
+# KPI por tópico
 kpi = (df.groupby("Topico_Final")
          .agg(Notas=("ID", "count"),
               Vistas=("Vistas", "sum"))
          .sort_values("Vistas", ascending=False))
 kpi["Vistas/Nota"] = kpi["Vistas"] / kpi["Notas"]
-kpi["% Notas"]     = (kpi["Notas"] / kpi["Notas"].sum() * 100).round(1)
+kpi["% Notas"]     = (kpi["Notas"]  / kpi["Notas"].sum()  * 100).round(1)
 kpi["% Vistas"]    = (kpi["Vistas"] / kpi["Vistas"].sum() * 100).round(1)
 
-# 2· PARETO (vistas acumuladas)
-pareto = kpi["Vistas"].cumsum() / kpi["Vistas"].sum() * 100
-
-# 3· BARRAS – vistas promedio por nota
+# Dataset auxiliares
+pareto     = kpi["Vistas"].cumsum() / kpi["Vistas"].sum() * 100
 mean_views = kpi["Vistas/Nota"].sort_values(ascending=False)
+disp       = (pd.DataFrame({"Notas": kpi["Notas"],
+                            "Vistas_x_Nota": kpi["Vistas/Nota"],
+                            "Total_Vistas": kpi["Vistas"]})
+              .reset_index())
+totales    = kpi[["Notas", "Vistas"]].reset_index()
+pivot      = (df.pivot_table(index="Dia_Semana",
+                             columns="Topico_Final",
+                             values="Vistas",
+                             aggfunc="sum",
+                             fill_value=0)
+                .reindex(["Monday","Tuesday","Wednesday","Thursday",
+                           "Friday","Saturday","Sunday"]))
 
-# 4· DISPERSIÓN eficiencia vs volumen
-disp = pd.DataFrame({
-    "Notas": kpi["Notas"],
-    "Vistas_x_Nota": kpi["Vistas/Nota"],
-    "Total_Vistas": kpi["Vistas"]
-}).reset_index()
-
-# 5· BARRAS agrupadas notas / vistas
-totales = kpi[["Notas", "Vistas"]].reset_index()
-
-# 6· HEATMAP día-semana × tópico
-pivot = (df.pivot_table(index="Dia_Semana",
-                        columns="Topico_Final",
-                        values="Vistas",
-                        aggfunc="sum",
-                        fill_value=0)
-           .reindex(["Monday","Tuesday","Wednesday","Thursday",
-                     "Friday","Saturday","Sunday"]))
-
-# ────────────────────────────────────────────────────────────────────────
-# PDF
+# ════════════════════════════════════════════════════════════════
+# PDF consolidado
 with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
 
-    # --- KPI TABLA ---
-    fig, ax = plt.subplots(figsize=(10, 0.6 + 0.25*len(kpi)))
+    # 1) Tabla KPI
+    fig, ax = plt.subplots(figsize=(10, 0.6 + 0.28*len(kpi)))
     ax.axis("off")
     tbl = ax.table(cellText=kpi.round(2).values,
                    colLabels=kpi.columns,
@@ -83,11 +72,13 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     ax.set_title("KPI por tópico (20/05 – 17/06)", fontsize=12, pad=12)
     pdf.savefig(fig); plt.close()
 
-    # --- Pareto ---
+    # 2) Pareto vistas acumuladas
     fig, ax1 = plt.subplots(figsize=(10,5))
     ax1.bar(kpi.index, kpi["Vistas"], color="skyblue")
     ax1.set_ylabel("Vistas acumuladas")
-    ax1.tick_params(axis="x", rotation=45, ha="right")
+    ax1.tick_params(axis="x", labelrotation=45)
+    plt.setp(ax1.get_xticklabels(), ha="right")
+
     ax2 = ax1.twinx()
     ax2.plot(pareto.index, pareto, color="orange", marker="o")
     ax2.set_ylabel("% acumulado")
@@ -95,7 +86,7 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     ax1.set_title("Pareto de vistas acumuladas por tópico")
     fig.tight_layout(); pdf.savefig(fig); plt.close()
 
-    # --- Barras promedio ---
+    # 3) Barras promedio vistas/nota
     fig, ax = plt.subplots(figsize=(10,5))
     mean_views.plot(kind="bar", ax=ax, color="#228B22")
     ax.set_ylabel("Vistas por nota")
@@ -104,12 +95,13 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
         ax.annotate(f"{p.get_height():.1f}",
                     (p.get_x()+p.get_width()/2, p.get_height()),
                     ha='center', va='bottom', fontsize=8)
-    ax.tick_params(axis="x", rotation=45, ha="right")
+    ax.tick_params(axis="x", labelrotation=45)
+    plt.setp(ax.get_xticklabels(), ha="right")
     fig.tight_layout(); pdf.savefig(fig); plt.close()
 
-    # --- Dispersión eficiencia vs volumen ---
+    # 4) Dispersión eficiencia vs volumen
     fig, ax = plt.subplots(figsize=(10,6))
-    sizes = disp["Total_Vistas"] / 10  # ajusta divisor según escala
+    sizes = disp["Total_Vistas"] / 10   # ajustar divisor según escala real
     ax.scatter(disp["Notas"], disp["Vistas_x_Nota"],
                s=sizes, alpha=0.7)
     ax.axhline(disp["Vistas_x_Nota"].mean(), ls='--', lw=1, color="grey")
@@ -122,10 +114,11 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     ax.set_title("Eficiencia vs volumen (tamaño = vistas totales)")
     fig.tight_layout(); pdf.savefig(fig); plt.close()
 
-    # --- Barras agrupadas ---
+    # 5) Barras agrupadas notas / vistas
     fig, ax = plt.subplots(figsize=(10,5))
     idx = range(len(totales))
-    ax.bar(idx, totales["Notas"],    width=0.4, label="Notas",   color="#1f77b4")
+    ax.bar(idx, totales["Notas"],           width=0.4,
+           label="Notas", color="#1f77b4")
     ax.bar([i+0.4 for i in idx], totales["Vistas"],
            width=0.4, label="Vistas", color="#ff7f0e")
     ax.set_xticks([i+0.2 for i in idx])
@@ -135,7 +128,7 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     ax.legend()
     fig.tight_layout(); pdf.savefig(fig); plt.close()
 
-    # --- Heatmap día-semana × tópico ---
+    # 6) Heatmap día de la semana × tópico
     fig, ax = plt.subplots(figsize=(14,5))
     sns.heatmap(pivot, fmt='d', annot=True, cmap="coolwarm", ax=ax,
                 cbar_kws=dict(label="Vistas"))
