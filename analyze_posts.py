@@ -3,15 +3,13 @@ Genera un informe PDF con visualizaciones clave
 a partir de datos_clasificados.csv (separador = coma).
 """
 
-import os, subprocess, sys, json
-import datetime as dt           #  ← NUEVO
+import os, sys, subprocess, json, datetime as dt
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
 
-
-# ────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
 # Instalar adjustText “on-the-fly” si hace falta
 try:
     from adjustText import adjust_text
@@ -19,31 +17,35 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "adjustText"])
     from adjustText import adjust_text
 
-# ────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
 CSV = "datos_clasificados.csv"
 df  = pd.read_csv(CSV, parse_dates=["Fecha"])
 
-# ───────────────────────────────────────────────
-# 2) Definir start_date y end_date  (AQUÍ)
-# ───────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
+# Definir rango incremental (start_date, end_date)
+# ───────────────────────────────────────────────────────────────
 STATE = ".ultima_fecha_analizada.json"
 
 if os.path.exists(STATE):
     with open(STATE) as f:
         last_date = dt.date.fromisoformat(json.load(f)["ultima_fecha"])
-    start_date = last_date + dt.timedelta(days=1)            # ← día siguiente
+    start_date = last_date + dt.timedelta(days=1)       # día siguiente
 else:
-    # Primera vez: toma 4 semanas hacia atrás
+    # Primera vez: 4 semanas hacia atrás desde la fecha más reciente
     start_date = (df["Fecha"].max() - pd.Timedelta(weeks=4)).date()
 
-end_date = df["Fecha"].max().date()                          # ← **define esto**
+end_date = df["Fecha"].max().date()                     # fecha más reciente
 
-# Filtra el dataframe para que TODO lo que sigue use solo ese rango
+# Filtrar dataframe SOLO al rango deseado
 mask = (df["Fecha"].dt.date >= start_date) & (df["Fecha"].dt.date <= end_date)
-df = df.loc[mask]
+df   = df.loc[mask]
 
-# ════════════════════════════════════════════════════════════════
-# KPI por tópico
+# Añadir columna Día_Semana (inglés; cambia a español si prefieres)
+df["Dia_Semana"] = df["Fecha"].dt.day_name()
+
+# ───────────────────────────────────────────────────────────────
+# KPI y datasets auxiliares
+# ───────────────────────────────────────────────────────────────
 kpi = (df.groupby("Topico_Final")
          .agg(Notas=("ID", "count"),
               Vistas=("Vistas", "sum"))
@@ -52,7 +54,6 @@ kpi["Vistas/Nota"] = kpi["Vistas"] / kpi["Notas"]
 kpi["% Notas"]     = (kpi["Notas"]  / kpi["Notas"].sum()  * 100).round(1)
 kpi["% Vistas"]    = (kpi["Vistas"] / kpi["Vistas"].sum() * 100).round(1)
 
-# Dataset auxiliares
 pareto     = kpi["Vistas"].cumsum() / kpi["Vistas"].sum() * 100
 mean_views = kpi["Vistas/Nota"].sort_values(ascending=False)
 disp       = (pd.DataFrame({"Notas": kpi["Notas"],
@@ -68,8 +69,12 @@ pivot      = (df.pivot_table(index="Dia_Semana",
                 .reindex(["Monday","Tuesday","Wednesday","Thursday",
                            "Friday","Saturday","Sunday"]))
 
-# ════════════════════════════════════════════════════════════════
-# PDF consolidado
+# ───────────────────────────────────────────────────────────────
+# Crear carpeta de salida y PDF consolidado
+# ───────────────────────────────────────────────────────────────
+OUT_DIR = "salida"
+os.makedirs(OUT_DIR, exist_ok=True)
+
 with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
 
     # 1) Tabla KPI
@@ -85,13 +90,12 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     ax.set_title("KPI por tópico (20/05 – 17/06)", fontsize=12, pad=12)
     pdf.savefig(fig); plt.close()
 
-    # 2) Pareto vistas acumuladas
+    # 2) Pareto
     fig, ax1 = plt.subplots(figsize=(10,5))
     ax1.bar(kpi.index, kpi["Vistas"], color="skyblue")
     ax1.set_ylabel("Vistas acumuladas")
     ax1.tick_params(axis="x", labelrotation=45)
     plt.setp(ax1.get_xticklabels(), ha="right")
-
     ax2 = ax1.twinx()
     ax2.plot(pareto.index, pareto, color="orange", marker="o")
     ax2.set_ylabel("% acumulado")
@@ -99,7 +103,7 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     ax1.set_title("Pareto de vistas acumuladas por tópico")
     fig.tight_layout(); pdf.savefig(fig); plt.close()
 
-    # 3) Barras promedio vistas/nota
+    # 3) Barras Vistas/Nota
     fig, ax = plt.subplots(figsize=(10,5))
     mean_views.plot(kind="bar", ax=ax, color="#228B22")
     ax.set_ylabel("Vistas por nota")
@@ -114,26 +118,23 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
 
     # 4) Dispersión eficiencia vs volumen
     fig, ax = plt.subplots(figsize=(10,6))
-    sizes = disp["Total_Vistas"] / 10   # ajustar divisor según escala real
-    ax.scatter(disp["Notas"], disp["Vistas_x_Nota"],
-               s=sizes, alpha=0.7)
+    sizes = disp["Total_Vistas"] / 10  # ajusta si las burbujas se ven pequeñas
+    ax.scatter(disp["Notas"], disp["Vistas_x_Nota"], s=sizes, alpha=0.7)
     ax.axhline(disp["Vistas_x_Nota"].mean(), ls='--', lw=1, color="grey")
     ax.axvline(disp["Notas"].mean(),        ls='--', lw=1, color="grey")
-    texts = [ax.text(x, y, lbl) for x, y, lbl
-             in zip(disp["Notas"], disp["Vistas_x_Nota"], disp["Topico_Final"])]
-    adjust_text(texts, arrowprops=dict(arrowstyle='-', lw=.5))
+    for x, y, lbl in zip(disp["Notas"], disp["Vistas_x_Nota"], disp["Topico_Final"]):
+        ax.text(x, y, lbl)
     ax.set_xlabel("Cantidad de notas")
     ax.set_ylabel("Vistas por nota")
     ax.set_title("Eficiencia vs volumen (tamaño = vistas totales)")
     fig.tight_layout(); pdf.savefig(fig); plt.close()
 
-    # 5) Barras agrupadas notas / vistas
+    # 5) Barras agrupadas Notas / Vistas
     fig, ax = plt.subplots(figsize=(10,5))
     idx = range(len(totales))
-    ax.bar(idx, totales["Notas"],           width=0.4,
-           label="Notas", color="#1f77b4")
-    ax.bar([i+0.4 for i in idx], totales["Vistas"],
-           width=0.4, label="Vistas", color="#ff7f0e")
+    ax.bar(idx, totales["Notas"], width=0.4, label="Notas", color="#1f77b4")
+    ax.bar([i+0.4 for i in idx], totales["Vistas"], width=0.4,
+           label="Vistas", color="#ff7f0e")
     ax.set_xticks([i+0.2 for i in idx])
     ax.set_xticklabels(totales["Topico_Final"], rotation=45, ha="right")
     ax.set_title("Notas publicadas y vistas por tópico\n(20/05 – 17/06)")
@@ -151,11 +152,11 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
 
 print(f"✅ Informe generado: {OUT_DIR}/informe_analisis.pdf")
 
-# ──  A)  Escribir la fecha de corte  ──────────────────────────
-import json, os
+# ───────────────────────────────────────────────────────────────
+# Guardar la fecha de corte para la próxima corrida
+# ───────────────────────────────────────────────────────────────
 with open(".ultima_fecha_analizada.json", "w") as f:
     json.dump({"ultima_fecha": end_date.isoformat()}, f)
 
-# ──  B)  (Opcional) listar archivos para depurar  ─────────────
 print("Archivos en cwd tras generar el reporte:")
 print(os.listdir("."))
