@@ -62,8 +62,8 @@ jobs:
 
       # 8 — Subir estado de última fecha
       - name: Subir estado de última fecha
-        if: ${{ hashFiles('**/.ultima_fecha_analizada.json') != '' }}
+        if: ${{ hashFiles('.ultima_fecha_analizada.json') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: estado-ultima-fecha
-          path: '**/.ultima_fecha_analizada.json'
+          path: ./.ultima_fecha_analizada.json    # ← ruta directa
