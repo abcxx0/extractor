@@ -37,13 +37,13 @@ def portada(pdf, resumen_bullets, kpi_row, fecha_hoy):
     # 2) Tabla KPI (usando tbl_y)
     col_labels = ["Notas", "Vistas", "1.º tema", "Eficiencia top"]
     table = plt.table(cellText=[kpi_row],
-                      colLabels=col_labels,
-                      cellLoc="center", loc="center")
+                  colLabels=col_labels,
+                  cellLoc="center",
+                  bbox=[0.15, tbl_y, 0.7, 0.12])   # x, y, ancho, alto en coords figura
     table.auto_set_font_size(False)
     table.set_fontsize(table_font)
     table.scale(1, 2.5)
-    # x, y, ancho, alto  (usa tbl_y):
-    table.set_position([0.15, tbl_y, 0.7, 0.12])
+
 
     # 3) Bullets (usando bullet_y0)
     for i, line in enumerate(resumen_bullets):
