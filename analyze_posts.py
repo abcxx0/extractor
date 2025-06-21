@@ -160,3 +160,13 @@ with open(".ultima_fecha_analizada.json", "w") as f:
 
 print("Archivos en cwd tras generar el reporte:")
 print(os.listdir("."))
+
+# ── Guardar la última fecha analizada en la raíz del repo ──────────
+from pathlib import Path
+STATE_FILE = Path(__file__).resolve().parent / ".ultima_fecha_analizada.json"
+
+with open(STATE_FILE, "w") as f:
+    json.dump({"ultima_fecha": end_date.isoformat()}, f)
+
+print("JSON de estado guardado en:", STATE_FILE)
+
