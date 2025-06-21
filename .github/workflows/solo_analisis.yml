@@ -67,3 +67,5 @@ jobs:
         with:
           name: estado-ultima-fecha
           path: ./.ultima_fecha_analizada.json    # ← ruta directa
+          include-hidden-files: true          # ← ¡nuevo!
+
