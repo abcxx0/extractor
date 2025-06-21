@@ -20,35 +20,45 @@ except ImportError:
 # ───────────────────────────────────────────────────────────────
 ### NUEVO: función para generar la portada del PDF
 def portada(pdf, resumen_bullets, kpi_row, fecha_hoy):
-    """Crea la primera página (portada) del informe."""
     fig = plt.figure(figsize=(8.27, 11.69))            # A4 vertical
-    # Título y subtítulo
+
+    # 1) Título y subtítulo
     fig.text(0.5, 0.93, "Informe semanal de tráfico",
              ha="center", va="top", weight="bold", size=24)
     fig.text(0.5, 0.88, "Dónde ganamos y dónde perderíamos clics",
              ha="center", va="top", size=16, color="#005FAB")
 
-    # Cuadro de KPI
+    # ── AQUÍ van las tres líneas de layout ─────────────────────
+    tbl_y      = 0.55        # desplaza la tabla hacia abajo
+    bullet_y0  = 0.48        # punto de partida de los bullets
+    table_font = 12          # tamaño de fuente de la tabla
+    # -----------------------------------------------------------
+
+    # 2) Tabla KPI (usando tbl_y)
     col_labels = ["Notas", "Vistas", "1.º tema", "Eficiencia top"]
     table = plt.table(cellText=[kpi_row],
                       colLabels=col_labels,
-                      loc="center", cellLoc="center")
+                      cellLoc="center", loc="center")
     table.auto_set_font_size(False)
-    table.set_fontsize(14)
-    table.scale(1, 3)
+    table.set_fontsize(table_font)
+    table.scale(1, 2.5)
+    # x, y, ancho, alto  (usa tbl_y):
+    table.set_position([0.15, tbl_y, 0.7, 0.12])
 
-    # Lista de ideas
-    y0 = 0.34
+    # 3) Bullets (usando bullet_y0)
     for i, line in enumerate(resumen_bullets):
-        fig.text(0.07, y0 - i*0.04, f"• {line}", size=12, va="top")
+        fig.text(0.07, bullet_y0 - i*0.035, f"• {line}",
+                 size=12, va="top")
 
-    # Pie de página
+    # 4) Pie de página
     fig.text(0.5, 0.05,
              f"Generado automáticamente · {fecha_hoy:%d %b %Y}",
              ha="center", size=8, color="gray")
 
+    # 5) Guardar la página
     pdf.savefig(fig)
     plt.close()
+
 
 # ───────────────────────────────────────────────────────────────
 CSV = "datos_clasificados.csv"
