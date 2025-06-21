@@ -18,6 +18,39 @@ except ImportError:
     from adjustText import adjust_text
 
 # ───────────────────────────────────────────────────────────────
+### NUEVO: función para generar la portada del PDF
+def portada(pdf, resumen_bullets, kpi_row, fecha_hoy):
+    """Crea la primera página (portada) del informe."""
+    fig = plt.figure(figsize=(8.27, 11.69))            # A4 vertical
+    # Título y subtítulo
+    fig.text(0.5, 0.93, "Informe semanal de tráfico",
+             ha="center", va="top", weight="bold", size=24)
+    fig.text(0.5, 0.88, "Dónde ganamos y dónde perderíamos clics",
+             ha="center", va="top", size=16, color="#005FAB")
+
+    # Cuadro de KPI
+    col_labels = ["Notas", "Vistas", "1.º tema", "Eficiencia top"]
+    table = plt.table(cellText=[kpi_row],
+                      colLabels=col_labels,
+                      loc="center", cellLoc="center")
+    table.auto_set_font_size(False)
+    table.set_fontsize(14)
+    table.scale(1, 3)
+
+    # Lista de ideas
+    y0 = 0.34
+    for i, line in enumerate(resumen_bullets):
+        fig.text(0.07, y0 - i*0.04, f"• {line}", size=12, va="top")
+
+    # Pie de página
+    fig.text(0.5, 0.05,
+             f"Generado automáticamente · {fecha_hoy:%d %b %Y}",
+             ha="center", size=8, color="gray")
+
+    pdf.savefig(fig)
+    plt.close()
+
+# ───────────────────────────────────────────────────────────────
 CSV = "datos_clasificados.csv"
 df  = pd.read_csv(CSV, parse_dates=["Fecha"])
 
@@ -34,7 +67,8 @@ else:
     # Primera vez: 4 semanas hacia atrás desde la fecha más reciente
     start_date = (df["Fecha"].max() - pd.Timedelta(weeks=4)).date()
 
-end_date = df["Fecha"].max().date()                     # fecha más reciente
+end_date   = df["Fecha"].max().date()                   # fecha más reciente
+rango_str  = f"{start_date:%d/%m} – {end_date:%d/%m}"   # para títulos dinámicos
 
 # Filtrar dataframe SOLO al rango deseado
 mask = (df["Fecha"].dt.date >= start_date) & (df["Fecha"].dt.date <= end_date)
@@ -69,6 +103,21 @@ pivot      = (df.pivot_table(index="Dia_Semana",
                 .reindex(["Monday","Tuesday","Wednesday","Thursday",
                            "Friday","Saturday","Sunday"]))
 
+# ───────────────── NUEVO: datos para la portada ────────────────
+today          = pd.Timestamp.today()
+tot_notas      = int(kpi["Notas"].sum())
+tot_vistas     = int(kpi["Vistas"].sum())
+top_tema       = kpi.index[0]                         # tema con más vistas
+ef_top         = kpi.loc[top_tema, "Vistas/Nota"]
+
+resumen_ideas = [
+    "Concentrar esfuerzos en Policial y Justicia",
+    "Revisar Finanzas y Turismo (baja tracción)",
+    "Mantener volumen en Deportes, pero subir eficiencia",
+]
+kpi_row = [tot_notas, tot_vistas, top_tema, f"{ef_top:.1f} v/n"]
+# ───────────────────────────────────────────────────────────────
+
 # ───────────────────────────────────────────────────────────────
 # Crear carpeta de salida y PDF consolidado
 # ───────────────────────────────────────────────────────────────
@@ -76,6 +125,9 @@ OUT_DIR = "salida"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
+
+    # 0) Portada
+    portada(pdf, resumen_ideas, kpi_row, today)
 
     # 1) Tabla KPI
     fig, ax = plt.subplots(figsize=(10, 0.6 + 0.28*len(kpi)))
@@ -87,7 +139,7 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
     tbl.auto_set_font_size(False)
     tbl.set_fontsize(8)
     tbl.scale(1, 1.4)
-    ax.set_title("KPI por tópico (20/05 – 17/06)", fontsize=12, pad=12)
+    ax.set_title(f"KPI por tópico ({rango_str})", fontsize=12, pad=12)
     pdf.savefig(fig); plt.close()
 
     # 2) Pareto
@@ -137,7 +189,7 @@ with PdfPages(f"{OUT_DIR}/informe_analisis.pdf") as pdf:
            label="Vistas", color="#ff7f0e")
     ax.set_xticks([i+0.2 for i in idx])
     ax.set_xticklabels(totales["Topico_Final"], rotation=45, ha="right")
-    ax.set_title("Notas publicadas y vistas por tópico\n(20/05 – 17/06)")
+    ax.set_title(f"Notas publicadas y vistas por tópico\n({rango_str})")
     ax.set_ylabel("Cantidad")
     ax.legend()
     fig.tight_layout(); pdf.savefig(fig); plt.close()
@@ -169,4 +221,3 @@ with open(STATE_FILE, "w") as f:
     json.dump({"ultima_fecha": end_date.isoformat()}, f)
 
 print("JSON de estado guardado en:", STATE_FILE)
-
