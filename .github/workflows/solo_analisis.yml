@@ -60,8 +60,10 @@ jobs:
           name: informe-analisis              # así aparecerá en Artifacts
           path: salida/                       # carpeta que crea tu script
 
-      - name: Subir estado de última fecha                               # ### NUEVO
-        uses: actions/upload-artifact@v4                                 # ### NUEVO
-        with:                                                            # ### NUEVO
-          name: estado-ultima-fecha                                      # ### NUEVO
-          path: .ultima_fecha_analizada.json                             # ### NUEVO
+      # 8 — Subir estado de última fecha
+      - name: Subir estado de última fecha
+        if: ${{ hashFiles('**/.ultima_fecha_analizada.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: estado-ultima-fecha
+          path: '**/.ultima_fecha_analizada.json'
