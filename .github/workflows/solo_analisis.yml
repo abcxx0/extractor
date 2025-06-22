@@ -70,17 +70,21 @@ jobs:
           name: informe-analisis              # así aparecerá en Artifacts
           path: salida/                       # carpeta que crea tu script
 
-      # 8 — Commit JSON a main para GitHub Pages
+           # 8 — Commit JSON a main para GitHub Pages (fix auth)
       - name: Commit datos_actualizados.json to main
         if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Reconfigura origin con el token para poder pushear
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git add salida/datos_actualizados.json
           git commit -m "📈 Actualiza JSON de datos_actualizados" || echo "No changes to commit"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Empuja usando origin ya con token
+          git push origin HEAD:main
+
 
 
       # 9 — Subir estado de última fecha
