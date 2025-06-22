@@ -70,7 +70,20 @@ jobs:
           name: informe-analisis              # así aparecerá en Artifacts
           path: salida/                       # carpeta que crea tu script
 
-      # 8 — Subir estado de última fecha
+      # 8 — Commit JSON a main para GitHub Pages
+      - name: Commit datos_actualizados.json to main
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add salida/datos_actualizados.json
+          git commit -m "📈 Actualiza JSON de datos_actualizados" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      # 9 — Subir estado de última fecha
       - name: Subir estado de última fecha
         if: ${{ hashFiles('.ultima_fecha_analizada.json') != '' }}
         uses: actions/upload-artifact@v4
