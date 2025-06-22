@@ -57,6 +57,12 @@ jobs:
       - name: Generar JSON para el widget
         run: python3 dump_json.py
 
+# 6-cuatro — Verificar que el JSON se creó
+      - name: Verificar archivos después del JSON
+        run: |
+          echo "DESPUÉS de dump_json:"
+          ls -R salida/
+
       # 7 — Subir informe y gráficos como artefacto
       - name: Subir informe y gráficos
         uses: actions/upload-artifact@v4
