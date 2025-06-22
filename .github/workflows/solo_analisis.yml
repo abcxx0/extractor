@@ -73,18 +73,20 @@ jobs:
           name: informe-analisis              # así aparecerá en Artifacts
           path: salida/                       # carpeta que crea tu script
 
-   # 8 — Commit JSON a main para que Pages/raw lo sirva
+         # 8 — Commit datos_actualizados.json a main usando PAT_TOKEN
       - name: Commit datos_actualizados.json to main
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          # Reconfigura origin con el PAT
+          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
           git add salida/datos_actualizados.json
-          git commit -m "📈 Actualiza JSON de datos_actualizados" || echo "No changes to commit"
+          git commit -m "📈 Actualiza datos_actualizados.json" || echo "No changes to commit"
           git push origin HEAD:main
+
 
 
 
