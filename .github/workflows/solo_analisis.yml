@@ -3,6 +3,9 @@ name: Ejecutar solo análisis
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   run-analysis:
     runs-on: ubuntu-latest
@@ -70,7 +73,7 @@ jobs:
           name: informe-analisis              # así aparecerá en Artifacts
           path: salida/                       # carpeta que crea tu script
 
-           # 8 — Commit JSON a main para GitHub Pages (fix auth)
+   # 8 — Commit JSON a main para que Pages/raw lo sirva
       - name: Commit datos_actualizados.json to main
         if: always()
         env:
@@ -78,11 +81,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Reconfigura origin con el token para poder pushear
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git add salida/datos_actualizados.json
           git commit -m "📈 Actualiza JSON de datos_actualizados" || echo "No changes to commit"
-          # Empuja usando origin ya con token
           git push origin HEAD:main
 
 
