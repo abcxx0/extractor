@@ -53,6 +53,10 @@ jobs:
           echo "Listado recursivo:"
           ls -R
 
+      # 6-ter — Generar JSON para el widget
+      - name: Generar JSON para el widget
+        run: python3 dump_json.py
+
       # 7 — Subir informe y gráficos como artefacto
       - name: Subir informe y gráficos
         uses: actions/upload-artifact@v4
