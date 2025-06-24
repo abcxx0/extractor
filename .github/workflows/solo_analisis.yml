@@ -2,6 +2,10 @@ name: Ejecutar solo análisis
 
 on:
   workflow_dispatch:
+  workflow_run:             # para dispararlo tras Extraer Posts
+    workflows: ["Extraer Posts"]
+    types:
+      - completed
 
 permissions:
   contents: write
