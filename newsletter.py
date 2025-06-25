@@ -101,13 +101,27 @@ def main(csv_path, out_dir):
         sign = "+" if pct >= 0 else ""
         md.append("## 🏅 Hallazgos clave\n")
         md.append(f"- **Variación semanal:** {sign}{pct:.1f}% (de {prev_total} a {total} artículos).")
+        
         # Top incremento y disminución
         gain = trend.sort_values('pct_change', ascending=False).iloc[0]
         loss = trend.sort_values('pct_change').iloc[0]
         md.append(f"- **Mayor incremento:** {gain.name} (+{gain['pct_change']:.0f}% notas).")
         md.append(f"- **Mayor disminución:** {loss.name} ({loss['pct_change']:.0f}% notas).")
         md.append("\n")
+        
+        # 📈 Variación por tópico
+        md.append("### 📈 Variación por tópico\n")
+        md.append("| Tópico | Anterior | Actual | Δ notas | % cambio |")
+        md.append("|---|---:|---:|---:|---:|")
+        for tema, row in trend.iterrows():
+            ant   = int(row['previous'])
+            act   = int(row['current'])
+            delta = int(row['delta'])
+            pct_t = row['pct_change']
+            md.append(f"| {tema} | {ant} | {act} | {delta:+d} | {pct_t:+.1f}% |")
+        md.append("")   # separador final
 
+    
     # Distribución y KPI
     md.append("## 📊 Distribución por tópico\n")
     md.append(f"![Artículos por tópico]({os.path.basename(chart_path)})\n")
