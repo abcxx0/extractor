@@ -125,6 +125,9 @@ pivot      = (df.pivot_table(index="Dia_Semana",
                 .reindex(["Monday","Tuesday","Wednesday","Thursday",
                            "Friday","Saturday","Sunday"]))
 
+# ——— Forzar ints para que fmt='d' siga funcionando ———
+pivot = pivot.astype(int)
+
 # ───────────────── NUEVO: datos para la portada ────────────────
 today          = pd.Timestamp.today()
 tot_notas      = int(kpi["Notas"].sum())
