@@ -2,8 +2,8 @@ name: 📬 Generar newsletter semanal
 
 on:
   schedule:
-    - cron: '0 0 * * 0'      # cada domingo a la 00:00 UTC
-  workflow_dispatch:        # permite lanzarlo manualmente
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,30 +23,24 @@ jobs:
       - name: 📦 Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install \
-            pandas \
-            requests \
-            beautifulsoup4 \
-            PyYAML \
-            tqdm \
-            unidecode
-          
+          pip install pandas requests beautifulsoup4 PyYAML tqdm unidecode matplotlib
+
       - name: 📝 Ejecutar extract_posts.py
         run: python extract_posts.py
 
       - name: 📂 Ejecutar classify_posts.py
         run: python classify_posts.py
 
-      - name: 📰 Ejecutar newsletter.py
-        run: python newsletter.py datos_clasificados.csv salida
+      - name: 📰 Generar newsletter con análisis
+        run: python scripts/newsletter.py datos_clasificados.csv salida
 
       - name: 📤 Subir artefactos
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: newsletter
           path: salida/
 
-      - name: ✍️ Commit & push del resultado
+      - name: ✍️ Commit & push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
