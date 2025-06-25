@@ -67,22 +67,34 @@ df  = pd.read_csv(CSV, parse_dates=["Fecha"])
 # ───────────────────────────────────────────────────────────────
 # Definir rango incremental (start_date, end_date)
 # ───────────────────────────────────────────────────────────────
-STATE = ".ultima_fecha_analizada.json"
-
-if os.path.exists(STATE):
-    with open(STATE) as f:
-        last_date = dt.date.fromisoformat(json.load(f)["ultima_fecha"])
-    start_date = last_date + dt.timedelta(days=1)       # día siguiente
-else:
+#STATE = ".ultima_fecha_analizada.json"
+#
+#if os.path.exists(STATE):
+#    with open(STATE) as f:
+#        last_date = dt.date.fromisoformat(json.load(f)["ultima_fecha"])
+#    start_date = last_date + dt.timedelta(days=1)       # día siguiente
+#else:
     # Primera vez: 4 semanas hacia atrás desde la fecha más reciente
-    start_date = (df["Fecha"].max() - pd.Timedelta(weeks=4)).date()
+#    start_date = (df["Fecha"].max() - pd.Timedelta(weeks=4)).date()
 
-end_date   = df["Fecha"].max().date()                   # fecha más reciente
-rango_str  = f"{start_date:%d/%m} – {end_date:%d/%m}"   # para títulos dinámicos
+#end_date   = df["Fecha"].max().date()                   # fecha más reciente
+#rango_str  = f"{start_date:%d/%m} – {end_date:%d/%m}"   # para títulos dinámicos
 
 # Filtrar dataframe SOLO al rango deseado
+#mask = (df["Fecha"].dt.date >= start_date) & (df["Fecha"].dt.date <= end_date)
+#df   = df.loc[mask]
+
+# ───────────────────────────────────────────────────────────────
+# Rango fijo: últimos 7 días
+# ───────────────────────────────────────────────────────────────
+from datetime import timedelta
+
+end_date = df["Fecha"].max().date()
+start_date = end_date - timedelta(days=6)
+rango_str = f"{start_date:%d/%m} – {end_date:%d/%m}"
+
 mask = (df["Fecha"].dt.date >= start_date) & (df["Fecha"].dt.date <= end_date)
-df   = df.loc[mask]
+df = df.loc[mask]
 
 # Añadir columna Día_Semana (inglés; cambia a español si prefieres)
 df["Dia_Semana"] = df["Fecha"].dt.day_name()
