@@ -1,0 +1,45 @@
+name: 📬 Generar newsletter semanal
+
+# Se ejecuta cada 7 días y también lo puedes lanzar manualmente
+on:
+  schedule:
+    - cron: '0 0 * * 0'      # cada domingo a las 00:00 UTC
+  workflow_dispatch:        # botón "Run workflow" manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔽 Checkout del repo
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: 📦 Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          [ -f requirements.txt ] && pip install -r requirements.txt || echo "No hay requirements.txt"
+
+      - name: 📝 Extraer posts
+        run: python extract_posts.py
+
+      - name: 📂 Clasificar posts
+        run: python classify_posts.py
+
+      - name: 📰 Generar newsletter
+        run: |
+          python scripts/newsletter.py \
+            datos_clasificados.csv \
+            salida
+
+      - name: ✍️ Commit & push de la newsletter
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add salida/
+          git commit -m "📰 Newsletter $(date +%Y-%m-%d)" || echo "Sin cambios"
+          git push
