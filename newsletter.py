@@ -42,14 +42,27 @@ def load_and_detect(csv_path):
 
 def update_history(hist_path, total):
     today = datetime.now().date()
+
     if os.path.exists(hist_path):
+        # 1) Leemos el CSV y parseamos la columna ‘fecha’ como datetime
         hist = pd.read_csv(hist_path, parse_dates=['fecha'])
+        # 2) Convertimos a date para descartar la hora
+        hist['fecha'] = hist['fecha'].dt.date
     else:
         hist = pd.DataFrame(columns=['fecha','total'])
+
+    # 3) Buscamos la fila de hace 7 días (ahora ambos son date)
     prev = hist[hist['fecha'] == (today - timedelta(days=7))]
-    hist = pd.concat([hist, pd.DataFrame([{'fecha': today, 'total': total}])], ignore_index=True)
-    hist.to_csv(hist_path, index=False)
+
+    # 4) Añadimos la fila de hoy
+    new_row = {'fecha': today, 'total': total}
+    hist = pd.concat([hist, pd.DataFrame([new_row])], ignore_index=True)
+
+    # 5) Guardamos sólo la parte de fecha (YYYY-MM-DD) para mantener el CSV limpio
+    hist.to_csv(hist_path, index=False, date_format='%Y-%m-%d')
+
     return prev
+
 
 def compute_trends(df_curr, df_prev, topic_col, views_col):
     curr = df_curr[topic_col].value_counts().rename('current')
