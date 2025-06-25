@@ -42,7 +42,7 @@ jobs:
 
       # 6) Generar la newsletter
       - name: 📰 Ejecutar newsletter.py
-        run: python scripts/newsletter.py datos_clasificados.csv salida
+        run: python newsletter.py datos_clasificados.csv salida
 
       # 7) Commit & push del resultado
       - name: ✍️ Commit & push
