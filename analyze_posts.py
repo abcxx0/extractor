@@ -125,8 +125,8 @@ pivot      = (df.pivot_table(index="Dia_Semana",
                 .reindex(["Monday","Tuesday","Wednesday","Thursday",
                            "Friday","Saturday","Sunday"]))
 
-# ——— Forzar ints para que fmt='d' siga funcionando ———
-pivot = pivot.astype(int)
+ # ——— Rellenar NaN con 0 y forzar ints para que fmt='d' siga funcionando ———
+pivot = pivot.fillna(0).astype(int)
 
 # ───────────────── NUEVO: datos para la portada ────────────────
 today          = pd.Timestamp.today()
