@@ -32,7 +32,7 @@ jobs:
         run: python classify_posts.py
 
       - name: 📰 Generar newsletter con análisis
-        run: python scripts/newsletter.py datos_clasificados.csv salida
+        run: python newsletter.py datos_clasificados.csv salida
 
       - name: 📤 Subir artefactos
         uses: actions/upload-artifact@v4
