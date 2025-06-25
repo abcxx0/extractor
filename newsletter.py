@@ -1,76 +1,74 @@
 #!/usr/bin/env python3
 import pandas as pd
-import csv
+import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
-import os
-import sys
+import os, sys
 
-def detect_delimiter(path, sample_size=2048):
-    with open(path, newline='', encoding='utf-8') as f:
-        sample = f.read(sample_size)
-        sniffer = csv.Sniffer()
-        try:
-            dialect = sniffer.sniff(sample)
-            return dialect.delimiter
-        except csv.Error:
-            return ','  # fallback
+def detect_delimiter(path):
+    # fuerza punto y coma, o detecta automáticamente si prefieres
+    return ';'
 
 def main(csv_path, out_dir):
-    # 1) Detectar delimitador
+    # --- Carga y filtra ---
     sep = detect_delimiter(csv_path)
-    print(f"🕵️‍♀️ Delimitador detectado: '{sep}'")
-
-    # 2) Leer CSV con motor python
-    try:
-        df = pd.read_csv(
-            csv_path,
-            sep=sep,
-            engine='python',
-            encoding='utf-8',
-            on_bad_lines='warn'  # warnings para líneas malas
-        )
-    except Exception as e:
-        print(f"❌ Error leyendo CSV: {e}")
-        sys.exit(1)
-
-    # 3) Detectar columna de fecha
-    cols = df.columns.tolist()
-    date_col = next((c for c in cols if 'fecha' in c.lower()), None)
-    if not date_col:
-        print(f"❌ No se encontró columna de fecha en {cols}")
-        sys.exit(1)
-
-    # 4) Parsear fechas
+    df = pd.read_csv(csv_path, sep=sep, engine='python', encoding='utf-8', on_bad_lines='warn')
+    df.columns = [c.strip() for c in df.columns]
+    # detectar columna de fecha
+    date_col = next((c for c in df.columns if 'fecha' in c.lower()), None)
     df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
-    if df[date_col].isna().all():
-        print(f"❌ No se pudo parsear ninguna fecha en '{date_col}'")
-        sys.exit(1)
+    cutoff = datetime.now() - timedelta(days=7)
+    df7 = df[df[date_col] >= cutoff].copy()
 
-    # 5) Filtrar últimos 7 días
-    hoy = datetime.now()
-    corte = hoy - timedelta(days=7)
-    df7 = df[df[date_col] >= corte]
+    # --- Métricas generales ---
+    total = len(df7)
+    topicos = df7['Topico_Final'].fillna('Sin tópico')
+    counts = topicos.value_counts()
+    n_topics = counts.size
+    top3 = counts.head(3)
 
-    # 6) Preparar salida
+    # --- Generación de gráfico ---
     os.makedirs(out_dir, exist_ok=True)
-    out_file = os.path.join(out_dir, f"{hoy.date()}-newsletter.md")
+    chart_path = os.path.join(out_dir, 'bar_topics.png')
+    plt.figure(figsize=(6,4))
+    counts.plot.bar()
+    plt.title('Artículos por tópico (últimos 7d)')
+    plt.ylabel('Cantidad')
+    plt.tight_layout()
+    plt.savefig(chart_path)
+    plt.close()
 
-    # 7) Escribir Markdown
-    with open(out_file, 'w', encoding='utf-8') as f:
-        f.write(f"# Newsletter semanal ({hoy.date()})\n\n")
-        for _, row in df7.iterrows():
-            title = row.get('Título') or row.get('Titulo') or row.get('title') or 'Sin título'
-            summary = row.get('Resumen') or row.get('resumen') or row.get('summary') or ''
-            url = row.get('Url') or row.get('URL') or row.get('url') or ''
-            f.write(f"## {title}\n\n")
-            f.write(f"{summary}\n\n")
-            if url:
-                f.write(f"[Leer más]({url})\n\n")
+    # --- Selección de artículos destacados ---
+    recent = df7.sort_values(date_col, ascending=False).head(3)
 
-    print(f"✅ Newsletter generada en {out_file}")
+    # --- Montar Markdown completo ---
+    md = []
+    md.append(f"# Newsletter semanal ({datetime.now().date()})\n")
+    md.append(f"- **Total de artículos:** {total}")
+    md.append(f"- **Tópicos cubiertos:** {n_topics}\n")
+    md.append("## Tópicos más frecuentes")
+    for tema, cnt in top3.items():
+        md.append(f"- **{tema}**: {cnt} notas")
+    md.append("\n---\n")
+    md.append("## Gráfico de distribución por tópico")
+    md.append(f"![Artículos por tópico]({os.path.basename(chart_path)})\n")
+    md.append("---\n")
+    md.append("## Artículos destacados\n")
+    for _, row in recent.iterrows():
+        title   = row.get('Título', row.get('Titulo', 'Sin título'))
+        summary = row.get('Resumen', '').strip()
+        url     = row.get('Url', row.get('URL', ''))
+        date    = row[date_col].date()
+        md.append(f"### {title}  \n*{date}*  \n\n{summary}  \n\n[Leer más]({url})\n")
+
+    # escribir Markdown
+    md_file = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
+    with open(md_file, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(md))
+
+    print(f"✅ Newsletter con análisis generada en {out_dir}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Uso: python newsletter.py <ruta_csv> <directorio_salida>")
+        print("Uso: python newsletter_analysis.py <csv_path> <out_dir>")
         sys.exit(1)
     main(sys.argv[1], sys.argv[2])
