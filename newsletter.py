@@ -167,14 +167,15 @@ def main(csv_path, out_dir):
         md.append(f"| {tema} | {cnt} | {cnt/total*100:.0f}% | {views} | {views/cnt:.1f} |")
     md.append("\n---\n")
 
-    # Artículos destacados por vistas
-md.append("## ✨ Artículos destacados\n")
-for _, r in df7.sort_values(views_col, ascending=False).head(4).iterrows():
-    fecha = r[date_col].strftime('%d %b %Y')
-    vistas = int(r[views_col])
-    md.append(f"### {r[title_col]}\n*{fecha} — {vistas} vistas*\n")
-    if summary_col: md.append(r[summary_col] + "\n")
-    if url_col:     md.append(f"[Leer más]({r[url_col]})\n")
+        # Artículos destacados por vistas
+    md.append("## ✨ Artículos destacados\n")
+    for _, r in df7.sort_values(views_col, ascending=False).head(4).iterrows():
+        fecha = r[date_col].strftime('%d %b %Y')
+        vistas = int(r[views_col])
+        md.append(f"### {r[title_col]}\n*{fecha} — {vistas} vistas*\n")
+        if summary_col: md.append(r[summary_col] + "\n")
+        if url_col:     md.append(f"[Leer más]({r[url_col]})\n")
+    md.append("\n---\n")
 
     # Recomendaciones dinámicas
     md.append("## 🔮 Recomendaciones\n")
@@ -196,7 +197,6 @@ for _, r in df7.sort_values(views_col, ascending=False).head(4).iterrows():
         md.extend(recomendaciones)
     else:
         md.append("- No se detectaron recomendaciones específicas esta semana.\n")
-
 
     # 6) Escritura final del Markdown
     out_md = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
