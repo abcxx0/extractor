@@ -255,32 +255,34 @@ plt.tight_layout()
 plt.savefig(line_chart_path)
 plt.close()
 
+plt.close()
+
 # Insertar en el markdown
 md.append("## 📈 Vistas acumuladas por día\n")
 md.append(f"![Vistas diarias]({os.path.basename(line_chart_path)})\n")
 
-    # 6) Escritura final del Markdown
-    out_md = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
-    with open(out_md, 'w', encoding='utf-8') as f:
-        f.write("\n".join(md))
+# 6) Escritura final del Markdown
+out_md = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
+with open(out_md, 'w', encoding='utf-8') as f:
+    f.write("\n".join(md))
 
-    # ——— Guardar el detalle de esta semana para la próxima corrida ———
-    semana_path = os.path.join(out_dir, f"{today}-articulos.csv")
-    df7.to_csv(semana_path, index=False, date_format='%Y-%m-%d')
+# ——— Guardar el detalle de esta semana para la próxima corrida ———
+semana_path = os.path.join(out_dir, f"{today}-articulos.csv")
+df7.to_csv(semana_path, index=False, date_format='%Y-%m-%d')
 
-    # Purga archivos de más de 7 días atrás
-    for fname in os.listdir(out_dir):
-        if fname.endswith('-articulos.csv'):
-            fecha_str = fname.split('-articulos.csv')[0]
-            try:
-                fecha = datetime.fromisoformat(fecha_str).date()
-                if fecha < prev_date:
-                    os.remove(os.path.join(out_dir, fname))
-            except ValueError:
-                pass
-    # ————————————————————————————————————————————————
+# Purga archivos de más de 7 días atrás
+for fname in os.listdir(out_dir):
+    if fname.endswith('-articulos.csv'):
+        fecha_str = fname.split('-articulos.csv')[0]
+        try:
+            fecha = datetime.fromisoformat(fecha_str).date()
+            if fecha < prev_date:
+                os.remove(os.path.join(out_dir, fname))
+        except ValueError:
+            pass
+# ————————————————————————————————————————————————
 
-    print(f"✅ Newsletter con análisis avanzado generada en {out_dir}")
+print(f"✅ Newsletter con análisis avanzado generada en {out_dir}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
