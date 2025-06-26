@@ -177,35 +177,38 @@ def main(csv_path, out_dir):
         if url_col:     md.append(f"[Leer más]({r[url_col]})\n")
     md.append("\n---\n")
 
-        # Recomendaciones dinámicas mejoradas
+           # Recomendaciones dinámicas basadas solo en esta semana
     md.append("## 🔮 Recomendaciones\n")
     recomendaciones = []
-    if trend is not None:
-        trend_sorted = trend.copy()
-        trend_sorted['notas'] = trend_sorted['current']
-        trend_sorted['vistas_totales'] = trend_sorted['notas'] * trend_sorted['engagement']
 
-        # REFUERZO: pocas notas y alto engagement
-        refuerzo = trend_sorted[(trend_sorted['notas'] <= 3)].sort_values('engagement', ascending=False).head(1)
-        for tema, row in refuerzo.iterrows():
-            recomendaciones.append(f"- Refuerzo en **{tema}**: alto interés con pocas notas (engagement: {row['engagement']:.1f}).")
+    resumen = (
+        df7.groupby(topic_col)
+           .agg(notas=('ID', 'count'), vistas_totales=(views_col, 'sum'))
+           .assign(engagement=lambda x: x['vistas_totales'] / x['notas'])
+    )
 
-        # OPTIMIZAR: muchas notas y bajo engagement
-        optimizar = trend_sorted[(trend_sorted['notas'] >= 3)].sort_values('engagement').head(1)
-        for tema, row in optimizar.iterrows():
-            recomendaciones.append(f"- Optimizar **{tema}**: bajo interés relativo pese a varias notas (engagement: {row['engagement']:.1f}).")
+    # REFUERZO
+    refuerzo = resumen[resumen['notas'] <= 3].sort_values('engagement', ascending=False).head(1)
+    for tema, row in refuerzo.iterrows():
+        recomendaciones.append(f"- Refuerzo en **{tema}**: alto interés con pocas notas (engagement: {row['engagement']:.1f}).")
 
-        # BUEN RENDIMIENTO: alto engagement y varias notas
-        rendimiento = trend_sorted[(trend_sorted['notas'] >= 3) & (trend_sorted['engagement'] >= 2.5)]
-        if not rendimiento.empty:
-            top_rendimiento = rendimiento.sort_values('engagement', ascending=False).head(1)
-            for tema, row in top_rendimiento.iterrows():
-                recomendaciones.append(f"- Buen rendimiento en **{tema}**: mantener estrategia (engagement: {row['engagement']:.1f}).")
+    # OPTIMIZAR
+    optimizar = resumen[resumen['notas'] >= 3].sort_values('engagement').head(1)
+    for tema, row in optimizar.iterrows():
+        recomendaciones.append(f"- Optimizar **{tema}**: bajo interés relativo pese a varias notas (engagement: {row['engagement']:.1f}).")
+
+    # BUEN RENDIMIENTO
+    buen_rend = resumen[(resumen['notas'] >= 3) & (resumen['engagement'] >= 2.5)]
+    if not buen_rend.empty:
+        top = buen_rend.sort_values('engagement', ascending=False).head(1)
+        for tema, row in top.iterrows():
+            recomendaciones.append(f"- Buen rendimiento en **{tema}**: mantener estrategia (engagement: {row['engagement']:.1f}).")
 
     if recomendaciones:
         md.extend(recomendaciones)
     else:
-        md.append("- Esta semana no se detectaron patrones claros, pero se recomienda revisar los tópicos menos vistos.\n")
+        md.append("- Esta semana no se detectaron patrones claros.\n")
+
 
 
     # 6) Escritura final del Markdown
