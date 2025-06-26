@@ -47,4 +47,4 @@
 
 ## 🔮 Recomendaciones
 
-- No se detectaron recomendaciones específicas esta semana.
+- Esta semana no se detectaron patrones claros, pero se recomienda revisar los tópicos menos vistos.
