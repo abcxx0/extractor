@@ -55,3 +55,6 @@
 
 - Francis Dinatale
 - Jose Manuel Ferrero
+## 📈 Vistas acumuladas por día
+
+![Vistas diarias](vistas_diarias.png)
