@@ -257,7 +257,7 @@ def main(csv_path, out_dir):
 
     plt.close()
 
-      plt.savefig(line_chart_path)
+    plt.savefig(line_chart_path)
     plt.close()
 
     # Insertar en el markdown
