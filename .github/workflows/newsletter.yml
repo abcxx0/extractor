@@ -1,8 +1,9 @@
 name: 📬 Generar newsletter semanal
 
 on:
-  schedule:
-    - cron: '0 0 * * 0'
+  push:
+    paths:
+      - datos_clasificados.csv
   workflow_dispatch:
 
 jobs:
