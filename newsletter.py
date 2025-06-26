@@ -257,9 +257,9 @@ def main(csv_path, out_dir):
 
     plt.close()
 
-# Insertar en el markdown
-md.append("## 📈 Vistas acumuladas por día\n")
-md.append(f"![Vistas diarias]({os.path.basename(line_chart_path)})\n")
+    # Insertar en el markdown
+    md.append("## 📈 Vistas acumuladas por día\n")
+    md.append(f"![Vistas diarias]({os.path.basename(line_chart_path)})\n")
 
 # 6) Escritura final del Markdown
 out_md = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
