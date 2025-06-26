@@ -50,3 +50,8 @@
 - Refuerzo en **Medio Ambiente**: alto interés con pocas notas (engagement: 39.0).
 - Optimizar **Política**: bajo interés relativo pese a varias notas (engagement: 1.0).
 - Buen rendimiento en **Deportes**: mantener estrategia (engagement: 3.5).
+
+## ✍️ Autores de la semana
+
+- Francis Dinatale
+- Jose Manuel Ferrero
