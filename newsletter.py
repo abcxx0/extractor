@@ -176,11 +176,27 @@ def main(csv_path, out_dir):
         if url_col:     md.append(f"[Leer más]({r[url_col]})\n")
     md.append("\n---\n")
 
-    # Recomendaciones
+        # Recomendaciones dinámicas
     md.append("## 🔮 Recomendaciones\n")
-    md.append("- Refuerzo en **Policial**: explotar el alto engagement con reportajes.")
-    md.append("- Revitalizar **Salud**: infografías y entrevistas para aumentar interés.")
-    md.append("- Optimizar **Internacional**: investigar causas de variación y ajustar enfoque.\n")
+    recomendaciones = []
+    if trend is not None:
+        for tema, row in trend.iterrows():
+            notas = int(row['current'])
+            vistas_total = df7[df7[topic_col] == tema][views_col].sum()
+            engagement = vistas_total / notas if notas > 0 else 0
+
+            if notas <= 2 and engagement >= 10:
+                recomendaciones.append(f"- Refuerzo en **{tema}**: alto interés con pocas notas publicadas.")
+            elif engagement < 3 and notas >= 3:
+                recomendaciones.append(f"- Optimizar **{tema}**: bajo interés relativo, revisar enfoque.")
+            elif notas >= 5 and engagement >= 8:
+                recomendaciones.append(f"- Buen rendimiento en **{tema}**: mantener la estrategia actual.")
+
+    if recomendaciones:
+        md.extend(recomendaciones)
+    else:
+        md.append("- No se detectaron recomendaciones específicas esta semana.\n")
+
 
     # 6) Escritura final del Markdown
     out_md = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
