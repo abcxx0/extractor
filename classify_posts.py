@@ -87,7 +87,7 @@ TOPICOS = {
     "canasta básica", "costo de vida", "tarifas eléctricas", "tarifas de gas",
     "tarifas de agua", "transporte", "alquiler", "vivienda",
     "paritarias", "salario nominal", "salario real", "poder adquisitivo",
-    "presupuesto familiar", "ajuste familiar", "consumo", "precios cuidados", "indexación", "índice de precios"],
+    "presupuesto familiar", "ajuste familiar", "consumo", "precios cuidados", "indexación", "YPF", "nafta", "descuento", "rebaja", "combustible", "índice de precios"],
 
     "Deportes":      [
     "Juventud Alianza", "defensa y justicia", "seleccion","mundial","copa america","champions","libertadores","sudamericana",
@@ -110,12 +110,14 @@ TOPICOS = {
                   "alerta amarilla","alerta naranja","alerta roja","pronostico meteorologico","humedad",
                   "fenomeno climatico", "inundación","sequía","temperatura","meteorológico","alerta","tormenta",
                       "ous meteorológico","lluvia","temporal","cambio climático","desastres naturales",
-                      "inundacion","calor","temperatura","lluvias"],
+                      "inundacion","calor","temperatura","lluvias", "nieve", "SMN", "invierno", "nieve"],
 
     "Medio Ambiente": [
     "medio ambiente", "sustentabilidad", "ecología", "biodiversidad",
     "conservación", "contaminación", "reciclaje", "residuos",
-    "cambio climático", "efecto invernadero", "huella de carbono", "sostenible", "recicl"],
+    "cambio climático", "efecto invernadero", "huella de carbono", "sostenible", "recicl", "incendio", "deforestación", "reforestación", "forestal", "quema", "especies invasoras",
+"vertido", "microplásticos", "basural", "desechos", "basura", "energía renovable", "energías limpias", "paneles solares", "eólica", "agua potable", "contaminación hídrica", "sequía", "crisis hídrica", "activismo ambiental", "educación ambiental", "regulación ambiental", "reserva natural", "fauna", "flora",
+    "hábitat", "ecosistema", "protección ambiental"],
 
     "Eventos y Comunidad":         [ "movilizacion", "protesta", "asamblea", "acto", "encuentro",
   "feria", "festival", "carnaval", "aniversario", "festejo",
@@ -157,7 +159,7 @@ TOPICOS = {
     "Turismo y viajes":         ["turismo", "turistas", "fin de semana largo", "feriado", "viaje",
     "vuelos", "aerolínea", "crucero", "hospedaje", "pasaporte",
     "visa", "aduana", "excursión", "agencia de viajes", "paquete turístico",
-    "mochilero", "destino", "feriado XXL"],
+    "mochilero", "destino", "feriado XXL", "Air Europa", "vuelo", "aeropuerto", "flybondi", "jetsmart", "aerolineas"],
 
     "Interés general":["energia","medio ambiente","fin de semana largo","feriado","servicios","consumo",
                   "costumbres","tendencias","estilo de vida","hogar","mascotas","lectura","juegos",
