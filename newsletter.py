@@ -229,6 +229,36 @@ def main(csv_path, out_dir):
     else:
         md.append("- No se detectó una columna de autor.\n")
 
+
+    # 📈 Gráfico de vistas acumuladas por día (curva suave)
+df7['fecha_dia'] = df7[date_col].dt.date
+vistas_por_dia = df7.groupby('fecha_dia')[views_col].sum().sort_index()
+
+# Convertir fechas a números para suavizar
+x = np.arange(len(vistas_por_dia))
+y = vistas_por_dia.values
+x_smooth = np.linspace(x.min(), x.max(), 300)
+
+spl = make_interp_spline(x, y, k=2)
+y_smooth = spl(x_smooth)
+
+# Graficar curva
+line_chart_path = os.path.join(out_dir, 'vistas_diarias.png')
+plt.figure(figsize=(8, 4))
+plt.plot(x_smooth, y_smooth, color='#5A78D1', linewidth=2.5)
+plt.xticks(ticks=x, labels=vistas_por_dia.index.strftime('%d %b'), rotation=45)
+plt.title('📈 Vistas acumuladas por día')
+plt.xlabel('Fecha')
+plt.ylabel('Vistas totales')
+plt.grid(alpha=0.2)
+plt.tight_layout()
+plt.savefig(line_chart_path)
+plt.close()
+
+# Insertar en el markdown
+md.append("## 📈 Vistas acumuladas por día\n")
+md.append(f"![Vistas diarias]({os.path.basename(line_chart_path)})\n")
+
     # 6) Escritura final del Markdown
     out_md = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
     with open(out_md, 'w', encoding='utf-8') as f:
