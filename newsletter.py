@@ -167,16 +167,16 @@ def main(csv_path, out_dir):
         md.append(f"| {tema} | {cnt} | {cnt/total*100:.0f}% | {views} | {views/cnt:.1f} |")
     md.append("\n---\n")
 
-    # Artículos destacados
-    md.append("## ✨ Artículos destacados\n")
-    for _, r in df7.sort_values(date_col, ascending=False).head(3).iterrows():
-        fecha = r[date_col].strftime('%d %b %Y')
-        md.append(f"### {r[title_col]}\n*{fecha}*\n")
-        if summary_col: md.append(r[summary_col] + "\n")
-        if url_col:     md.append(f"[Leer más]({r[url_col]})\n")
-    md.append("\n---\n")
+    # Artículos destacados por vistas
+md.append("## ✨ Artículos destacados\n")
+for _, r in df7.sort_values(views_col, ascending=False).head(4).iterrows():
+    fecha = r[date_col].strftime('%d %b %Y')
+    vistas = int(r[views_col])
+    md.append(f"### {r[title_col]}\n*{fecha} — {vistas} vistas*\n")
+    if summary_col: md.append(r[summary_col] + "\n")
+    if url_col:     md.append(f"[Leer más]({r[url_col]})\n")
 
-        # Recomendaciones dinámicas
+    # Recomendaciones dinámicas
     md.append("## 🔮 Recomendaciones\n")
     recomendaciones = []
     if trend is not None:
@@ -185,11 +185,11 @@ def main(csv_path, out_dir):
             vistas_total = df7[df7[topic_col] == tema][views_col].sum()
             engagement = vistas_total / notas if notas > 0 else 0
 
-            if notas <= 2 and engagement >= 10:
+            if notas <= 2 and engagement >= 3.5:
                 recomendaciones.append(f"- Refuerzo en **{tema}**: alto interés con pocas notas publicadas.")
-            elif engagement < 3 and notas >= 3:
+            elif notas >= 3 and engagement < 1.5:
                 recomendaciones.append(f"- Optimizar **{tema}**: bajo interés relativo, revisar enfoque.")
-            elif notas >= 5 and engagement >= 8:
+            elif notas >= 4 and engagement >= 2.5:
                 recomendaciones.append(f"- Buen rendimiento en **{tema}**: mantener la estrategia actual.")
 
     if recomendaciones:
