@@ -231,31 +231,31 @@ def main(csv_path, out_dir):
 
 
     # 📈 Gráfico de vistas acumuladas por día (curva suave)
-df7['fecha_dia'] = df7[date_col].dt.date
-vistas_por_dia = df7.groupby('fecha_dia')[views_col].sum().sort_index()
+    df7['fecha_dia'] = df7[date_col].dt.date
+    vistas_por_dia = df7.groupby('fecha_dia')[views_col].sum().sort_index()
 
-# Convertir fechas a números para suavizar
-x = np.arange(len(vistas_por_dia))
-y = vistas_por_dia.values
-x_smooth = np.linspace(x.min(), x.max(), 300)
+    # Convertir fechas a números para suavizar
+    x = np.arange(len(vistas_por_dia))
+    y = vistas_por_dia.values
+    x_smooth = np.linspace(x.min(), x.max(), 300)
 
-spl = make_interp_spline(x, y, k=2)
-y_smooth = spl(x_smooth)
+    spl = make_interp_spline(x, y, k=2)
+    y_smooth = spl(x_smooth)
 
-# Graficar curva
-line_chart_path = os.path.join(out_dir, 'vistas_diarias.png')
-plt.figure(figsize=(8, 4))
-plt.plot(x_smooth, y_smooth, color='#5A78D1', linewidth=2.5)
-plt.xticks(ticks=x, labels=vistas_por_dia.index.strftime('%d %b'), rotation=45)
-plt.title('📈 Vistas acumuladas por día')
-plt.xlabel('Fecha')
-plt.ylabel('Vistas totales')
-plt.grid(alpha=0.2)
-plt.tight_layout()
-plt.savefig(line_chart_path)
-plt.close()
+    # Graficar curva
+    line_chart_path = os.path.join(out_dir, 'vistas_diarias.png')
+    plt.figure(figsize=(8, 4))
+    plt.plot(x_smooth, y_smooth, color='#5A78D1', linewidth=2.5)
+    plt.xticks(ticks=x, labels=vistas_por_dia.index.strftime('%d %b'), rotation=45)
+    plt.title('📈 Vistas acumuladas por día')
+    plt.xlabel('Fecha')
+    plt.ylabel('Vistas totales')
+    plt.grid(alpha=0.2)
+    plt.tight_layout()
+    plt.savefig(line_chart_path)
+    plt.close()
 
-plt.close()
+    plt.close()
 
 # Insertar en el markdown
 md.append("## 📈 Vistas acumuladas por día\n")
