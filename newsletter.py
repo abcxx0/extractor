@@ -246,7 +246,7 @@ def main(csv_path, out_dir):
     line_chart_path = os.path.join(out_dir, 'vistas_diarias.png')
     plt.figure(figsize=(8, 4))
     plt.plot(x_smooth, y_smooth, color='#5A78D1', linewidth=2.5)
-    plt.xticks(ticks=x, labels=vistas_por_dia.index.strftime('%d %b'), rotation=45)
+    plt.xticks(ticks=x, labels=[d.strftime('%d %b') for d in vistas_por_dia.index], rotation=45)
     plt.title('📈 Vistas acumuladas por día')
     plt.xlabel('Fecha')
     plt.ylabel('Vistas totales')
