@@ -210,6 +210,21 @@ def main(csv_path, out_dir):
         md.append("- Esta semana no se detectaron patrones claros.\n")
 
 
+    # Autores de la semana (solo nombres, orden informativo no numérico)
+    md.append("\n## ✍️ Autores de la semana\n")
+    autor_col = next((c for c in df7.columns if 'autor' in c.lower()), None)
+    if autor_col:
+        autores = (
+            df7.groupby(autor_col)
+               .agg(articulos=('ID', 'count'), vistas_totales=(views_col, 'sum'))
+               .assign(orden=lambda x: x['articulos'] * 1.5 + x['vistas_totales'] / 10)
+               .sort_values('orden', ascending=False)
+               .head(5)
+        )
+        for autor in autores.index:
+            md.append(f"- {autor}")
+    else:
+        md.append("- No se detectó una columna de autor.\n")
 
     # 6) Escritura final del Markdown
     out_md = os.path.join(out_dir, f"{datetime.now().date()}-newsletter.md")
