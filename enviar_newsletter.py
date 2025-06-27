@@ -18,18 +18,19 @@ ap.add_argument("--solo-html", action="store_true",
 args = ap.parse_args()
 
 # ---------- Cargar markdown y plantilla ----------
-md_text   = Path(args.md).read_text(encoding="utf-8")
-template  = Path(args.tpl).read_text(encoding="utf-8")
-cuerpo    = markdown.markdown(md_text, extensions=["tables"])
-env       = jinja2.Environment(autoescape=True)
-html_raw  = env.from_string(template).render(
-                asunto = "Informe semanal",
-                titulo = "📊 Resumen de la semana",
-                cuerpo_html = cuerpo,
-                enlace_baja = "#"
-           )
+md_text  = Path(args.md).read_text(encoding="utf-8")
+template = Path(args.tpl).read_text(encoding="utf-8")
 
-# ---------- Inlinizar CSS (más compatibilidad) ----------
+cuerpo   = markdown.markdown(md_text, extensions=["tables"])
+env      = jinja2.Environment(autoescape=True)
+html_raw = env.from_string(template).render(
+    asunto      = "📊 Informe semanal 📈",
+    titulo      = "📊 Resumen de la semana",
+    cuerpo_html = cuerpo,
+    enlace_baja = "#"
+)
+
+# ---------- Inlinizar CSS ----------
 html_ready = premailer.transform(html_raw)
 
 # ---------- Guardar HTML para el workflow ----------
@@ -39,24 +40,26 @@ print(f"✅ HTML listo en {args.out}")
 if args.solo_html:
     exit(0)   # —— FIN para el workflow ——
 
-# ---------- Datos SMTP desde variables de entorno ----------
-SMTP_USER = os.getenv("SMTP_USER")     # tu Gmail
-SMTP_PASS = os.getenv("SMTP_PASS")     # App-Password
+# ---------- Datos SMTP ----------
+SMTP_USER = os.getenv("SMTP_USER")   # tu Gmail desde Secrets
+SMTP_PASS = os.getenv("SMTP_PASS")   # App-Password
+
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
 
-TO      = os.getenv("MAIL_TO", "").split(",")  # “a,b,c”
-SUBJECT = "Informe semanal"
+# ---------- Destinatarios y asunto ----------
+TO = ["reimundo.m52@gmail.com"]          # ← destinatario(s) fijo(s)
+SUBJECT = "📊 Informe semanal 📈"
 
 # ---------- Construir mensaje ----------
 msg = EmailMessage()
 msg["Subject"] = SUBJECT
 msg["From"]    = SMTP_USER
-msg["To"]      = TO
+msg["To"]      = ", ".join(TO)
 msg.set_content("Tu cliente no soporta HTML. Abre la versión web.")
 msg.add_alternative(html_ready, subtype="html")
 
-# Adjuntar gráficas que ya generas (cid)
+# Adjuntar gráficas (CID)
 for img in ["salida/line_views.png", "salida/bar_topics.png"]:
     if not Path(img).exists():
         continue
@@ -65,10 +68,9 @@ for img in ["salida/line_views.png", "salida/bar_topics.png"]:
         maintype, subtype = mimetypes.guess_type(img)[0].split("/")
         msg.get_payload()[1].add_related(
             f.read(), maintype=maintype, subtype=subtype, cid=f"<{cid}>")
-    # reemplazar src en HTML
     html_ready = html_ready.replace(os.path.basename(img), f"cid:{cid}")
 
-# Vuelve a insertar la versión cid-izada
+# Reemplazar alternativa con src actualizados
 msg.replace_alternative(html_ready, subtype="html")
 
 # ---------- Enviar ----------
