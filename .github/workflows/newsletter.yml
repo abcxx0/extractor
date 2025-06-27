@@ -1,12 +1,10 @@
 name: 📬 Generar newsletter semanal
 
 on:
-  # Corre automáticamente apenas se sube / actualiza el CSV final
-  push:
-    paths:
-      - datos_clasificados.csv
-
-  # Permite lanzarlo manualmente desde Actions > Run workflow
+  workflow_run:
+    workflows: ["Extraer Posts"]
+    types:
+      - completed
   workflow_dispatch:
   
 jobs:
