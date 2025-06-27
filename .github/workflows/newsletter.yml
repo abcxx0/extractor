@@ -1,11 +1,14 @@
 name: 📬 Generar newsletter semanal
 
 on:
+  # Corre automáticamente apenas se sube / actualiza el CSV final
   push:
     paths:
       - datos_clasificados.csv
-  workflow_dispatch:
 
+  # Permite lanzarlo manualmente desde Actions > Run workflow
+  workflow_dispatch:
+  
 jobs:
   build:
     runs-on: ubuntu-latest
