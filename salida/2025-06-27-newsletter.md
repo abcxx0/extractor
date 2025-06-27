@@ -6,6 +6,13 @@
 
 ---
 
+## 📈 Vistas fluctuantes por día
+
+![Vistas fluctuantes por día](line_views.png)
+
+
+---
+
 ## 📊 Distribución por tópico
 
 ![Artículos por tópico](bar_topics.png)
