@@ -129,25 +129,40 @@ def main(csv_path, out_dir):
     plt.savefig(chart_path)
     plt.close()
     
-     # 4.b) Gráfico CURVO de vistas fluctuantes por día
+             # 4.b) Gráfico de vistas fluctuantes suavizado
     df7['solo_fecha'] = df7[date_col].dt.date
-    daily_views = df7.groupby('solo_fecha')[views_col].sum().reset_index()
-    views_chart = os.path.join(out_dir, 'line_views.png')
+    daily = df7.groupby('solo_fecha')[views_col].sum().reset_index(name='vistas')
 
-    plt.figure()
-    plt.plot(
-        daily_views['solo_fecha'],
-        daily_views[views_col],
-        marker='o',
-        linestyle='-'
-    )
-    plt.title('Vistas fluctuantes por día (últimos 7 días)')
-    plt.xlabel('Fecha')
-    plt.ylabel('Vistas')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig(views_chart)
-    plt.close()
+    if not daily.empty:
+        # Suavizado: promedio móvil de 3 días
+        daily['suavizado'] = daily['vistas'].rolling(window=3, center=True, min_periods=1).mean()
+
+        views_chart = os.path.join(out_dir, 'line_views.png')
+        plt.figure()
+        plt.plot(
+            daily['solo_fecha'],
+            daily['suavizado'],
+            linestyle='-'
+        )
+        plt.scatter(
+            daily['solo_fecha'],
+            daily['vistas'],
+            color='black',
+            zorder=5
+        )
+
+        plt.title('Vistas fluctuantes por día (últimos 7 días)')
+        plt.xlabel('Fecha')
+        plt.ylabel('Vistas')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(views_chart)
+        plt.close()
+
+        md.append("## 📈 Vistas fluctuantes por día\n")
+        md.append(f"![Vistas fluctuantes por día]({os.path.basename(views_chart)})\n")
+        md.append("\n---\n")
+
 
 
     # 5) Construcción de narrativa automática
@@ -266,35 +281,6 @@ def main(csv_path, out_dir):
         md.append("- No se detectó una columna de autor.\n")
 
 
-    # 📈 Gráfico de vistas acumuladas por día (curva suave)
-    df7['fecha_dia'] = df7[date_col].dt.date
-    vistas_por_dia = df7.groupby('fecha_dia')[views_col].sum().sort_index()
-
-    # Convertir fechas a números para suavizar
-    x = np.arange(len(vistas_por_dia))
-    y = vistas_por_dia.values
-    x_smooth = np.linspace(x.min(), x.max(), 300)
-
-    spl = make_interp_spline(x, y, k=2)
-    y_smooth = spl(x_smooth)
-
-    # Graficar curva
-    line_chart_path = os.path.join(out_dir, 'vistas_diarias.png')
-    plt.figure(figsize=(8, 4))
-    plt.plot(x_smooth, y_smooth, color='#5A78D1', linewidth=2.5)
-    plt.xticks(ticks=x, labels=[d.strftime('%d %b') for d in vistas_por_dia.index], rotation=45)
-    plt.title('📈 Vistas acumuladas por día')
-    plt.xlabel('Fecha')
-    plt.ylabel('Vistas totales')
-    plt.grid(alpha=0.2)
-    plt.tight_layout()
-    plt.savefig(line_chart_path)
-    plt.close()
-
-    plt.close()
-
-    plt.savefig(line_chart_path)
-    plt.close()
 
     # Insertar en el markdown
     md.append("## 📈 Vistas acumuladas por día\n")
