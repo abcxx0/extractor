@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates 
 from datetime import datetime, timedelta
 import os, sys, csv
 from scipy.interpolate import make_interp_spline
@@ -130,27 +131,33 @@ def main(csv_path, out_dir):
     plt.savefig(chart_path)
     plt.close()
     
-             # 4.b) Gráfico de vistas fluctuantes suavizado
-    df7['solo_fecha'] = df7[date_col].dt.date
-    daily = df7.groupby('solo_fecha')[views_col].sum().reset_index(name='vistas')
+    # 4.b) Gráfico de vistas fluctuantes suavizado
+    df7['solo_fecha'] = pd.to_datetime(df7[date_col].dt.date)   # ≠ antes: aseguramos datetime
+    daily = (
+        df7.groupby('solo_fecha')[views_col]
+           .sum()
+           .reset_index(name='vistas')
+    )
 
     if not daily.empty:
         # Suavizado: promedio móvil de 3 días
-        daily['suavizado'] = daily['vistas'].rolling(window=3, center=True, min_periods=1).mean()
+        daily['suavizado'] = (
+            daily['vistas']
+            .rolling(window=3, center=True, min_periods=1)
+            .mean()
+        )
 
         views_chart = os.path.join(out_dir, 'line_views.png')
         plt.figure()
-        plt.plot(
-            daily['solo_fecha'],
-            daily['suavizado'],
-            linestyle='-'
-        )
-        plt.scatter(
-            daily['solo_fecha'],
-            daily['vistas'],
-            color='black',
-            zorder=5
-        )
+
+        # ───────── NUEVO: formateo limpio de fechas ─────────
+        ax = plt.gca()
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d %b'))  # 23 Jun
+        # ----------------------------------------------------
+
+        plt.plot(daily['solo_fecha'], daily['suavizado'], linestyle='-')
+        plt.scatter(daily['solo_fecha'], daily['vistas'],
+                    color='black', zorder=5)
 
         plt.title('Vistas fluctuantes por día (últimos 7 días)')
         plt.xlabel('Fecha')
@@ -163,21 +170,34 @@ def main(csv_path, out_dir):
     # 4.c) Heat-map día de la semana × tópico
     heatmap_path = os.path.join(out_dir, 'heatmap_topics.png')
 
+    # Mapa inglés → español
+    dia_map = {
+        "Monday":    "Lunes",
+        "Tuesday":   "Martes",
+        "Wednesday": "Miércoles",
+        "Thursday":  "Jueves",
+        "Friday":    "Viernes",
+        "Saturday":  "Sábado",
+        "Sunday":    "Domingo"
+    }
+
+    # Nueva columna con el nombre del día en castellano
+    df7["dia_semana_es"] = df7[date_col].dt.day_name().map(dia_map)
+
+    # Tabla dinámica: vistas por día × tópico
     pivot = (
         df7.pivot_table(
-            index=df7[date_col].dt.day_name(),
+            index="dia_semana_es",
             columns=topic_col,
             values=views_col,
             aggfunc='sum',
             fill_value=0
         )
-        .reindex([
-            "Lunes","Martes","Miercoles","Jueves",
-            "Viernes","Sabado","Domingo"
-        ])
+        .reindex(["Lunes","Martes","Miércoles","Jueves",
+                  "Viernes","Sábado","Domingo"])
     )
 
-    import seaborn as sns
+    import seaborn as sns                      # asegúrate de seaborn instalado
     plt.figure(figsize=(14, 5))
     sns.heatmap(pivot, fmt='d', annot=True, cmap="coolwarm",
                 cbar_kws=dict(label="Vistas"))
@@ -187,8 +207,7 @@ def main(csv_path, out_dir):
     plt.tight_layout()
     plt.savefig(heatmap_path)
     plt.close()
-
-
+    
     # 4.d) Barras agrupadas Notas / Vistas   ← NUEVO BLOQUE
     group_path = os.path.join(out_dir, 'bars_notes_views.png')
     totales = (
