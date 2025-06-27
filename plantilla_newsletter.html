@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ asunto }}</title>
+    <style>
+      body {margin:0;padding:0;font-family:Arial, sans-serif;background:#f4f4f4;}
+      .wrapper{width:100%;padding:20px 0;}
+      .content{width:600px;margin:0 auto;background:#ffffff;}
+      h1{font-size:24px;margin:20px 30px;}
+      p{font-size:15px;line-height:1.5;margin:0 30px 15px;}
+      a{color:#0066cc;text-decoration:none;}
+      img{max-width:100%;height:auto;display:block;}
+      .footer{font-size:12px;color:#666;padding:20px 30px;text-align:center;}
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <table class="content" role="presentation" cellpadding="0" cellspacing="0">
+        <tr><td>
+          <h1>{{ titulo }}</h1>
+          {{ cuerpo_html | safe }}
+        </td></tr>
+        <tr><td class="footer">
+          Recibes este correo porque estás suscrito al reporte semanal.<br>
+          <a href="{{ enlace_baja }}">Darme de baja</a>
+        </td></tr>
+      </table>
+    </div>
+  </body>
+</html>
