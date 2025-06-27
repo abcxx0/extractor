@@ -196,6 +196,7 @@ def main(csv_path, out_dir):
         .reindex(["Lunes","Martes","Miércoles","Jueves",
                   "Viernes","Sábado","Domingo"])
     )
+    pivot = pivot.astype(int)
 
     import seaborn as sns                      # asegúrate de seaborn instalado
     plt.figure(figsize=(14, 5))
