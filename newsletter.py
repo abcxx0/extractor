@@ -86,6 +86,16 @@ def main(csv_path, out_dir):
     df7 = df[df[date_col] >= cutoff].copy()
     total = len(df7)
 
+     # ——— DEBUG: verificar df7 y columnas ———
+    print(f"DEBUG: Filas en df7 = {total}")
+    print(f"DEBUG: Columnas disponibles = {df.columns.tolist()}")
+    if total > 0:
+        sample = df7[[date_col, views_col]].head()
+        print("DEBUG: Primeras filas de df7 con Fecha y Vistas:\n", sample.to_string(index=False))
+    else:
+        print("DEBUG: df7 está vacío; no hay datos en los últimos 7 días.")
+    # ————————————————————————————————————————
+
     # ——— Nuevas líneas para tendencias automáticas ———
     # Defino fecha de hoy y de hace 7 días
     today = datetime.now().date()
