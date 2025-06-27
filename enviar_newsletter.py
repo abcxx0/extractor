@@ -61,9 +61,14 @@ msg.set_content(md_text)
 
 # Preparar CID para cada imagen y reemplazar en el HTML
 cid_map = {}
-for img in ["salida/line_views.png", "salida/bar_topics.png"]:
+for img in [
+        "salida/line_views.png",          # gráfico de vistas diarias
+        # "salida/bar_topics.png",        # ← comenta o elimina si ya no lo usas
+        "salida/bars_notes_views.png",    # NUEVO: Notas vs Vistas
+        "salida/heatmap_topics.png"       # NUEVO: Heat-map día × tópico
+    ]:
     if Path(img).exists():
-        cid = make_msgid()[1:-1]            # sin < >
+        cid = make_msgid()[1:-1]          # sin los < >
         cid_map[img] = cid
         html_ready = html_ready.replace(os.path.basename(img), f"cid:{cid}")
 
