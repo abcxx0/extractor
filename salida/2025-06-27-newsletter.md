@@ -1,10 +1,3 @@
-## 📈 Vistas fluctuantes por día
-
-![Vistas fluctuantes por día](line_views.png)
-
-
----
-
 # Newsletter semanal (2025-06-27)
 
 **Total de artículos (20 Jun – 27 Jun):** 27  
