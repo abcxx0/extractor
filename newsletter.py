@@ -160,6 +160,58 @@ def main(csv_path, out_dir):
         plt.savefig(views_chart)
         plt.close()
 
+    # 4.c) Heat-map día de la semana × tópico
+    heatmap_path = os.path.join(out_dir, 'heatmap_topics.png')
+
+    pivot = (
+        df7.pivot_table(
+            index=df7[date_col].dt.day_name(),
+            columns=topic_col,
+            values=views_col,
+            aggfunc='sum',
+            fill_value=0
+        )
+        .reindex([
+            "Lunes","Martes","Miercoles","Jueves",
+            "Viernes","Sabado","Domingo"
+        ])
+    )
+
+    import seaborn as sns
+    plt.figure(figsize=(14, 5))
+    sns.heatmap(pivot, fmt='d', annot=True, cmap="coolwarm",
+                cbar_kws=dict(label="Vistas"))
+    plt.title("Heatmap: vistas por día de la semana y tópico")
+    plt.xlabel("Tópico")
+    plt.ylabel("Día de la semana")
+    plt.tight_layout()
+    plt.savefig(heatmap_path)
+    plt.close()
+
+
+    # 4.d) Barras agrupadas Notas / Vistas   ← NUEVO BLOQUE
+    group_path = os.path.join(out_dir, 'bars_notes_views.png')
+    totales = (
+        df7.groupby(topic_col)
+           .agg(Notas=('ID', 'count'),
+                Vistas=(views_col, 'sum'))
+           .sort_values('Vistas', ascending=False)
+           .reset_index()
+    )
+    fig, ax = plt.subplots(figsize=(10, 5))
+    idx = range(len(totales))
+    ax.bar(idx, totales["Notas"], width=0.4, label="Notas", color="#1f77b4")
+    ax.bar([i + 0.4 for i in idx], totales["Vistas"], width=0.4,
+           label="Vistas", color="#ff7f0e")
+    ax.set_xticks([i + 0.2 for i in idx])
+    ax.set_xticklabels(totales[topic_col], rotation=45, ha="right")
+    ax.set_title("Notas publicadas y vistas por tópico (últimos 7 días)")
+    ax.set_ylabel("Cantidad")
+    ax.legend()
+    fig.tight_layout()
+    plt.savefig(group_path)
+    plt.close()
+
 
 
     # 5) Construcción de narrativa automática
@@ -206,9 +258,23 @@ def main(csv_path, out_dir):
     md.append("\n---\n")
 
     # Distribución y KPI
-    md.append("## 📊 Distribución por tópico\n")
-    md.append(f"![Artículos por tópico]({os.path.basename(chart_path)})\n")
+    #md.append("## 📊 Distribución por tópico\n")
+    #md.append(f"![Artículos por tópico]({os.path.basename(chart_path)})\n")
+    #md.append("\n---\n")
+
+    # ─── NUEVO barras Notas vs Vistas
+    md.append("## 📑 Notas publicadas vs vistas por tópico\n")
+    md.append(f"![Notas vs vistas]({os.path.basename(group_path)})\n")
     md.append("\n---\n")
+
+    # ─── NUEVO bloque heat-map 
+    md.append("## 🗓️ Vistas por día y tópico\n")
+    md.append(f"![Heatmap vistas día y tópico]({os.path.basename(heatmap_path)})\n")
+    md.append("\n---\n")
+
+    
+
+    # Tabla de tópicos
     md.append("## 🔝 Tópicos más frecuentes\n")
     md.append("| Tópico | Notas | % Total | Vistas | Vistas/Nota |")
     md.append("|---|---:|---:|---:|---:|")
