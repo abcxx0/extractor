@@ -85,6 +85,7 @@ def main(csv_path, out_dir):
     cutoff = datetime.now() - timedelta(days=7)
     df7 = df[df[date_col] >= cutoff].copy()
     total = len(df7)
+    md = []
 
      # ——— DEBUG: verificar df7 y columnas ———
     print(f"DEBUG: Filas en df7 = {total}")
@@ -166,7 +167,7 @@ def main(csv_path, out_dir):
 
 
     # 5) Construcción de narrativa automática
-    md = []
+    
     md.append(f"# Newsletter semanal ({datetime.now().date()})\n")
     # Datos básicos
     start = (datetime.now() - timedelta(days=7)).strftime('%d %b')
