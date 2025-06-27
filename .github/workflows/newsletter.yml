@@ -38,6 +38,26 @@ jobs:
       - name: 📰 Generar newsletter con análisis
         run: python newsletter.py datos_clasificados.csv salida
 
+
+# ───────────────────────────── NEW ─────────────────────────────
+      - name: 🖨️ Renderizar HTML listo
+        run: |
+          python enviar_newsletter.py \
+                 --md salida/$(date +%F)-newsletter.md \
+                 --out newsletter_email.html \
+                 --solo-html
+
+      - name: ✉️ Enviar newsletter vía Gmail
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}   # tu gmail
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}   # app-password de 16 car.
+          MAIL_TO:   ${{ secrets.MAIL_TO }}     # “a,b,c”
+        run: |
+          python enviar_newsletter.py \
+                 --md salida/$(date +%F)-newsletter.md \
+                 --out newsletter_email.html
+
+                 
       - name: 📤 Subir artefactos
         uses: actions/upload-artifact@v4
         with:
