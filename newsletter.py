@@ -128,6 +128,27 @@ def main(csv_path, out_dir):
     plt.tight_layout()
     plt.savefig(chart_path)
     plt.close()
+    
+     # 4.b) Gráfico CURVO de vistas fluctuantes por día
+    df7['solo_fecha'] = df7[date_col].dt.date
+    daily_views = df7.groupby('solo_fecha')[views_col].sum().reset_index()
+    views_chart = os.path.join(out_dir, 'line_views.png')
+
+    plt.figure()
+    plt.plot(
+        daily_views['solo_fecha'],
+        daily_views[views_col],
+        marker='o',
+        linestyle='-'
+    )
+    plt.title('Vistas fluctuantes por día (últimos 7 días)')
+    plt.xlabel('Fecha')
+    plt.ylabel('Vistas')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(views_chart)
+    plt.close()
+
 
     # 5) Construcción de narrativa automática
     md = []
@@ -166,7 +187,12 @@ def main(csv_path, out_dir):
             md.append(f"| {tema} | {ant} | {act} | {delta:+d} | {pct_t:+.1f}% |")
         md.append("")   # separador final
 
-    
+
+            # 📈 Vistas fluctuantes por día
+    md.append("## 📈 Vistas fluctuantes por día\n")
+    md.append(f"![Vistas fluctuantes por día]({os.path.basename(views_chart)})\n")
+    md.append("\n---\n")
+
     # Distribución y KPI
     md.append("## 📊 Distribución por tópico\n")
     md.append(f"![Artículos por tópico]({os.path.basename(chart_path)})\n")
