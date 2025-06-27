@@ -1,7 +1,7 @@
-name: 📤 Test envío newsletter
+name: 📤 Test envío último newsletter
 
 on:
-  workflow_dispatch:        # se lanza manualmente
+  workflow_dispatch:       # un clic y listo
 
 jobs:
   send:
@@ -16,16 +16,11 @@ jobs:
       - name: Instalar deps mínimas
         run: pip install markdown jinja2 premailer
 
-      # --- Genera un markdown de prueba (o usa uno ya existente) ---
-      - name: Crear demo.md
-        run: |
-          echo "# Test envío" > demo.md
-          echo "Envío rápido desde Actions." >> demo.md
-
-      # --- Renderiza y envía ---
-      - name: Enviar correo de prueba
+      - name: Encontrar el último newsletter y enviarlo
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
         run: |
-          python enviar_newsletter.py --md demo.md
+          latest_md=$(ls -t salida/*-newsletter.md | head -n1)
+          echo "📄 Enviando $latest_md"
+          python enviar_newsletter.py --md "$latest_md"
