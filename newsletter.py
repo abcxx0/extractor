@@ -160,10 +160,6 @@ def main(csv_path, out_dir):
         plt.savefig(views_chart)
         plt.close()
 
-        md.append("## 📈 Vistas fluctuantes por día\n")
-        md.append(f"![Vistas fluctuantes por día]({os.path.basename(views_chart)})\n")
-        md.append("\n---\n")
-
 
 
     # 5) Construcción de narrativa automática
