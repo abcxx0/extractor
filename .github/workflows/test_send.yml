@@ -1,0 +1,31 @@
+name: 📤 Test envío newsletter
+
+on:
+  workflow_dispatch:        # se lanza manualmente
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar deps mínimas
+        run: pip install markdown jinja2 premailer
+
+      # --- Genera un markdown de prueba (o usa uno ya existente) ---
+      - name: Crear demo.md
+        run: |
+          echo "# Test envío" > demo.md
+          echo "Envío rápido desde Actions." >> demo.md
+
+      # --- Renderiza y envía ---
+      - name: Enviar correo de prueba
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+        run: |
+          python enviar_newsletter.py --md demo.md
