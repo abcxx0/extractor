@@ -49,7 +49,7 @@ SMTP_PORT = 465
 # ---------- Destinatarios y asunto ----------
 TO = ["reimundo.m52@gmail.com",
   "diariociudadanosur@hotmail.com"]             # ← destinatarios fijos
-SUBJECT = "📊 Informe semanal 📈"
+SUBJECT = "📊 Informe semanal 📈 | Ciudadano Calamuchita 🗞️"
 
 # ---------- Construir mensaje ----------
 msg = EmailMessage()
