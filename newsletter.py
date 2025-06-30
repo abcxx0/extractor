@@ -324,6 +324,9 @@ def main(csv_path, out_dir):
            .assign(engagement=lambda x: x['vistas_totales'] / x['notas'])
     )
 
+    # Quitamos la fila “Otros” si existe
+resumen = resumen.drop(index='Otros', errors='ignore')
+
     # REFUERZO
     refuerzo = resumen[resumen['notas'] <= 3].sort_values('engagement', ascending=False).head(1)
     for tema, row in refuerzo.iterrows():
