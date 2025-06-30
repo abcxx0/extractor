@@ -314,7 +314,7 @@ def main(csv_path, out_dir):
         if url_col:     md.append(f"[Leer más]({r[url_col]})\n")
     md.append("\n---\n")
 
-           # Recomendaciones dinámicas basadas solo en esta semana
+    # Recomendaciones dinámicas basadas solo en esta semana
     md.append("## 🔮 Recomendaciones\n")
     recomendaciones = []
 
@@ -325,7 +325,7 @@ def main(csv_path, out_dir):
     )
 
     # Quitamos la fila “Otros” si existe
-resumen = resumen.drop(index='Otros', errors='ignore')
+    resumen = resumen.drop(index='Otros', errors='ignore')
 
     # REFUERZO
     refuerzo = resumen[resumen['notas'] <= 3].sort_values('engagement', ascending=False).head(1)
