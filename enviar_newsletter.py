@@ -48,7 +48,7 @@ SMTP_PORT = 465
 
 # ---------- Destinatarios y asunto ----------
 TO = ["reimundo.m52@gmail.com",
-  "diariociudadanosur@hotmail.com]             # ← destinatarios fijos
+  "diariociudadanosur@hotmail.com"]             # ← destinatarios fijos
 SUBJECT = "📊 Informe semanal 📈"
 
 # ---------- Construir mensaje ----------
